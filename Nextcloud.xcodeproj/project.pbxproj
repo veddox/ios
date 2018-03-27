@@ -129,6 +129,8 @@
 		F726EEEC1FED1C820030B9C8 /* NCEndToEndInitialize.swift in Sources */ = {isa = PBXBuildFile; fileRef = F726EEEB1FED1C820030B9C8 /* NCEndToEndInitialize.swift */; };
 		F72AAECA1E5C60C700BB17E1 /* AHKActionSheet.m in Sources */ = {isa = PBXBuildFile; fileRef = F72AAEC31E5C60C700BB17E1 /* AHKActionSheet.m */; };
 		F72AAECB1E5C60C700BB17E1 /* AHKActionSheetViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = F72AAEC51E5C60C700BB17E1 /* AHKActionSheetViewController.m */; };
+		F72D074D206A93F100ABC350 /* FileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F72D074B206A93F100ABC350 /* FileProviderEnumerator.swift */; };
+		F72D074E206A93F100ABC350 /* FileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F72D074C206A93F100ABC350 /* FileProviderItem.swift */; };
 		F732B3371E8045A1002B7D75 /* SwiftWebVC.strings in Resources */ = {isa = PBXBuildFile; fileRef = F732B3351E8045A1002B7D75 /* SwiftWebVC.strings */; };
 		F732BA061D76CE1500E9878B /* CCNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = F732BA041D76CE1500E9878B /* CCNetworking.m */; };
 		F732BA0B1D76DBA500E9878B /* CCNetworking.m in Sources */ = {isa = PBXBuildFile; fileRef = F732BA041D76CE1500E9878B /* CCNetworking.m */; };
@@ -802,6 +804,8 @@
 		F72AAEC31E5C60C700BB17E1 /* AHKActionSheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AHKActionSheet.m; sourceTree = "<group>"; };
 		F72AAEC41E5C60C700BB17E1 /* AHKActionSheetViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AHKActionSheetViewController.h; sourceTree = "<group>"; };
 		F72AAEC51E5C60C700BB17E1 /* AHKActionSheetViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AHKActionSheetViewController.m; sourceTree = "<group>"; };
+		F72D074B206A93F100ABC350 /* FileProviderEnumerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderEnumerator.swift; sourceTree = "<group>"; };
+		F72D074C206A93F100ABC350 /* FileProviderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderItem.swift; sourceTree = "<group>"; };
 		F73049B81CB567F000C7C320 /* NSString+TruncateToWidth.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+TruncateToWidth.h"; sourceTree = "<group>"; };
 		F73049B91CB567F000C7C320 /* NSString+TruncateToWidth.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+TruncateToWidth.m"; sourceTree = "<group>"; };
 		F7320931201B812F008A0888 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/CTAssetsPicker.strings; sourceTree = "<group>"; };
@@ -2151,6 +2155,8 @@
 			isa = PBXGroup;
 			children = (
 				F7F54CAB1E5AFF1E00E19C62 /* PickerFileProvider-Bridging-Header.h */,
+				F72D074B206A93F100ABC350 /* FileProviderEnumerator.swift */,
+				F72D074C206A93F100ABC350 /* FileProviderItem.swift */,
 				F74344241E1264EE001CC831 /* FileProvider.swift */,
 			);
 			path = PickerFileProvider;
@@ -3755,6 +3761,7 @@
 				F7BB50E41F2238D500C47094 /* AFURLSessionManager.m in Sources */,
 				F7BB50F91F2239C800C47094 /* BKShiftingView.m in Sources */,
 				F7BB50F21F22395D00C47094 /* UICKeyChainStore.m in Sources */,
+				F72D074E206A93F100ABC350 /* FileProviderItem.swift in Sources */,
 				F7BB50D01F22388600C47094 /* OCRichObjectStrings.m in Sources */,
 				F7BB50C91F22386400C47094 /* OCActivity.m in Sources */,
 				F7BB50AF1F22370300C47094 /* NCManageDatabase.swift in Sources */,
@@ -3762,6 +3769,7 @@
 				F7BB50BB1F22374E00C47094 /* OCNetworking.m in Sources */,
 				F7BB50C11F22378E00C47094 /* CCHud.m in Sources */,
 				F7BB50DE1F2238B700C47094 /* UtilsFramework.m in Sources */,
+				F72D074D206A93F100ABC350 /* FileProviderEnumerator.swift in Sources */,
 				F7BB50D61F22389900C47094 /* OCHTTPRequestOperation.m in Sources */,
 				F75131661FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */,
 				F7BB50BD1F22376000C47094 /* CCCertificate.m in Sources */,
