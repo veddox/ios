@@ -41,14 +41,16 @@ class FileProviderItem: NSObject, NSFileProviderItem {
         
         self.fileID = metadata.fileID
         self.filename = metadata.fileNameView
-        
+
         if (metadata.directory) {
             
             self.typeIdentifier = kUTTypeFolder as String
             self.childItemCount = 0
             
             if var serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) {
-                serverUrl = serverUrl + "/" + metadata.fileName
+                if (metadata.fileName != "") {
+                    serverUrl = serverUrl + "/" + metadata.fileName
+                }
                 if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", metadata.account, serverUrl)) {
                     
                     if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, directory.directoryID), sorted: "fileName", ascending: true) {
