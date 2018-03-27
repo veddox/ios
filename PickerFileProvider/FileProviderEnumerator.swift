@@ -38,6 +38,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         var items: [NSFileProviderItemProtocol] = []
         
         if #available(iOSApplicationExtension 11.0, *) {
+            
             if (enumeratedItemIdentifier == .rootContainer) {
                 
                 let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()!

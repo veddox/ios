@@ -20,10 +20,10 @@ class FileProviderItem: NSObject, NSFileProviderItem {
         return .allowsAll
     }
     
-    var filename: String
+    var filename: String = ""
     var typeIdentifier: String = ""
     var childItemCount: NSNumber?
-    var fileID = ""
+    var fileID: String = ""
     
     init(metadata: tableMetadata, root: Bool) {
         
@@ -33,18 +33,29 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             if root {
                 self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
             } else {
-                self.parentItemIdentifier = NSFileProviderItemIdentifier(rawValue: String(metadata.fileID))
+                self.parentItemIdentifier = NSFileProviderItemIdentifier(rawValue: String(metadata.directoryID))
             }
         } else {
-            self.parentItemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
+            self.parentItemIdentifier = NSFileProviderItemIdentifier("\(metadata.directoryID)")
         }
         
         self.fileID = metadata.fileID
         self.filename = metadata.fileNameView
         
         if (metadata.directory) {
+            
             self.typeIdentifier = kUTTypeFolder as String
-            self.childItemCount = 10
+            self.childItemCount = 0
+            
+            if var serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) {
+                serverUrl = serverUrl + "/" + metadata.fileName
+                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", metadata.account, serverUrl)) {
+                    
+                    if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, directory.directoryID), sorted: "fileName", ascending: true) {
+                        self.childItemCount = metadatas.count as NSNumber
+                    }
+                }
+            }
         }
     }
 }

@@ -82,11 +82,11 @@ class FileProvider: NSFileProviderExtension {
             
             let metadata = tableMetadata()
             metadata.account = activeAccount.account
-            metadata.fileID = directory.fileID
             metadata.fileName = "."
             metadata.fileNameView = "."
             metadata.directory = true
-            metadata.typeFile = "directory"
+            metadata.directoryID = directory.directoryID
+            metadata.typeFile = k_metadataTypeFile_directory
             
             return FileProviderItem(metadata: metadata, root: true) 
         }
