@@ -23,34 +23,44 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
     func enumerateItems(for observer: NSFileProviderEnumerationObserver, startingAt page: NSFileProviderPage) {
         
-        /* TODO:
-         - inspect the page to determine whether this is an initial or a follow-up request
-         
-         If this is an enumerator for a directory, the root container or all directories:
-         - perform a server request to fetch directory contents
-         If this is an enumerator for the active set:
-         - perform a server request to update your local database
-         - fetch the active set from your local database
-         
-         
-         */
-        
         var items: [NSFileProviderItemProtocol] = []
+
+        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
+            observer.didEnumerate(items)
+            observer.finishEnumerating(upTo: nil)
+            return
+        }
         
         if #available(iOSApplicationExtension 11.0, *) {
             
             if (enumeratedItemIdentifier == .rootContainer) {
                 
-                let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()!
-                let serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
-                let homeDirectory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl!))
+                if let serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)  {
+                    if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl))  {
+                        if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, directory.directoryID), sorted: "fileName", ascending: true) {
+                            for metadata in metadatas {
+                                let item = FileProviderItem(metadata: metadata, parent: "", root: true)
+                                items.append(item)
+                            }
+                        }
+                    }
+                }
                 
-                let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, (homeDirectory?.directoryID)!), sorted: "fileName", ascending: true)
+            } else {
                 
-                for metadata in metadatas! {
-                    
-                    let item = FileProviderItem(metadata: metadata, root: true)
-                    items.append(item)
+                if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, enumeratedItemIdentifier.rawValue))  {
+                    let parent = metadata.fileID
+                    if let directorySource = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID))  {
+                        let serverUrl = directorySource.serverUrl + "/" + metadata.fileName
+                        if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl))  {
+                            if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, directory.directoryID), sorted: "fileName", ascending: true) {
+                                for metadata in metadatas {
+                                    let item = FileProviderItem(metadata: metadata, parent: parent, root: false)
+                                    items.append(item)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

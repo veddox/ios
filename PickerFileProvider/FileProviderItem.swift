@@ -25,34 +25,30 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var childItemCount: NSNumber?
     var metadata = tableMetadata()
     
-    init(metadata: tableMetadata, root: Bool) {
-        
-        itemIdentifier =  NSFileProviderItemIdentifier("\(metadata.fileID)")
+    init(metadata: tableMetadata, parent: String, root: Bool) {
         
         if #available(iOSApplicationExtension 11.0, *) {
             if root {
                 self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
             } else {
-                self.parentItemIdentifier = NSFileProviderItemIdentifier(rawValue: String(metadata.directoryID))
+                self.parentItemIdentifier = NSFileProviderItemIdentifier(parent)
             }
         } else {
-            self.parentItemIdentifier = NSFileProviderItemIdentifier("\(metadata.directoryID)")
+            self.parentItemIdentifier = NSFileProviderItemIdentifier(parent)
         }
         
         self.metadata = metadata
         self.filename = metadata.fileNameView
-
+        itemIdentifier =  NSFileProviderItemIdentifier("\(metadata.fileID)")
+        
         if (metadata.directory) {
             
             self.typeIdentifier = kUTTypeFolder as String
             self.childItemCount = 0
             
             if var serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) {
-                if (metadata.fileName != "") {
-                    serverUrl = serverUrl + "/" + metadata.fileName
-                }
+                serverUrl = serverUrl + "/" + metadata.fileName
                 if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", metadata.account, serverUrl)) {
-                    
                     if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, directory.directoryID), sorted: "fileName", ascending: true) {
                         self.childItemCount = metadatas.count as NSNumber
                     }
