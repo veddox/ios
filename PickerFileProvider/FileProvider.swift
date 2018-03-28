@@ -12,7 +12,7 @@ import MobileCoreServices
 
 @available(iOSApplicationExtension 11.0, *)
 
-class FileProviderExtension: NSFileProviderExtension {
+class FileProvider: NSFileProviderExtension {
     
     var fileManager = FileManager()
     
