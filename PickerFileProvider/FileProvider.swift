@@ -82,6 +82,8 @@ class FileProvider: NSFileProviderExtension {
             
             let metadata = tableMetadata()
             metadata.account = activeAccount.account
+            metadata.fileName =  NCBrandOptions.sharedInstance.brand
+            metadata.fileNameView = NCBrandOptions.sharedInstance.brand
             metadata.directory = true
             metadata.directoryID = directory.directoryID
             metadata.typeFile = k_metadataTypeFile_directory
@@ -258,43 +260,5 @@ class FileProvider: NSFileProviderExtension {
         }
         return enumerator
     }
-    
-    /*
-    override func enumerator(for containerItemIdentifier: NSFileProviderItemIdentifier) throws -> NSFileProviderEnumerator {
-        print("LOG ---> enumerator")
-        var maybeEnumerator: NSFileProviderEnumerator? = nil
-        
-        print("LOG ---> containerItemIdentifier \(containerItemIdentifier)")
-        switch containerItemIdentifier {
-                case .rootContainer:
-                maybeEnumerator = RootContainerEnumerator(enumeratedItemIdentifier: containerItemIdentifier)
-                case .workingSet:
-                // TODO: instantiate an enumerator for the working set
-                maybeEnumerator = DirectoryEnumerator(enumeratedItemIdentifier: containerItemIdentifier)
-                default:
-                    do{
-                        let item = try self.item(for: containerItemIdentifier)
-                        
-                        if item.typeIdentifier == kUTTypeFolder as String {
-                            // - for a directory, instantiate an enumerator of its subitems
-                            maybeEnumerator = DirectoryEnumerator(enumeratedItemIdentifier: containerItemIdentifier)
-                        } else {
-                            // - for a file, instantiate an enumerator that observes changes to the file
-                            maybeEnumerator = DirectoryEnumerator(enumeratedItemIdentifier: containerItemIdentifier)
-                        }
-          
-                    } catch let error {
-                        maybeEnumerator = nil
-                        throw NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:])
-                    }
-            }
-            
-            guard let enumerator = maybeEnumerator else {
-            throw NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:])
-            }
-            return enumerator
-    }
-    */
-    
 }
 
