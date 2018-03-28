@@ -41,9 +41,12 @@ class FileProviderItem: NSObject, NSFileProviderItem {
         self.filename = metadata.fileNameView
         itemIdentifier =  NSFileProviderItemIdentifier("\(metadata.fileID)")
         
+        if let fileType = CCUtility.insertTypeFileIconName(metadata.fileNameView, metadata: metadata) {
+            self.typeIdentifier = fileType 
+        }
+        
         if (metadata.directory) {
             
-            self.typeIdentifier = kUTTypeFolder as String
             self.childItemCount = 0
             
             if var serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) {
