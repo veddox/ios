@@ -464,7 +464,7 @@
 		F7BB50FB1F2239CE00C47094 /* BKTouchIDSwitchView.m in Sources */ = {isa = PBXBuildFile; fileRef = F73CC0681E813DFF006E3047 /* BKTouchIDSwitchView.m */; };
 		F7BB50FC1F223A3B00C47094 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F70A63071D5B3467004E2AA5 /* libssl.a */; };
 		F7BB50FD1F223A3D00C47094 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F70A63061D5B3467004E2AA5 /* libcrypto.a */; };
-		F7BB9CAD206BDBC500AF8F4D /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BB9CAC206BDBC500AF8F4D /* FileProviderExtension.swift */; };
+		F7BB9CAF206BDF2A00AF8F4D /* FileProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BB9CAE206BDF2A00AF8F4D /* FileProvider.swift */; };
 		F7BE6E2F1D2D5C3B00106933 /* CCQuickActions.m in Sources */ = {isa = PBXBuildFile; fileRef = F7BE6E2C1D2D5C3B00106933 /* CCQuickActions.m */; };
 		F7BF1B431D51E893000854F6 /* CCLogin.m in Sources */ = {isa = PBXBuildFile; fileRef = F7BF1B401D51E893000854F6 /* CCLogin.m */; };
 		F7C525A01E3B48B700FFE02C /* CCNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7C5259F1E3B48B700FFE02C /* CCNotification.swift */; };
@@ -1394,7 +1394,7 @@
 		F7BB04861FD58ACB00BBFD2A /* cs-CZ */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "cs-CZ"; path = "cs-CZ.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		F7BB04871FD58ACB00BBFD2A /* cs-CZ */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "cs-CZ"; path = "cs-CZ.lproj/Intro.strings"; sourceTree = "<group>"; };
 		F7BB04881FD58ACB00BBFD2A /* cs-CZ */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "cs-CZ"; path = "cs-CZ.lproj/Error.strings"; sourceTree = "<group>"; };
-		F7BB9CAC206BDBC500AF8F4D /* FileProviderExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderExtension.swift; sourceTree = "<group>"; };
+		F7BB9CAE206BDF2A00AF8F4D /* FileProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProvider.swift; sourceTree = "<group>"; };
 		F7BE6E2B1D2D5C3B00106933 /* CCQuickActions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCQuickActions.h; sourceTree = "<group>"; };
 		F7BE6E2C1D2D5C3B00106933 /* CCQuickActions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCQuickActions.m; sourceTree = "<group>"; };
 		F7BF1B3F1D51E893000854F6 /* CCLogin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCLogin.h; sourceTree = "<group>"; };
@@ -2157,7 +2157,7 @@
 				F7F54CAB1E5AFF1E00E19C62 /* PickerFileProvider-Bridging-Header.h */,
 				F72D074B206A93F100ABC350 /* FileProviderEnumerator.swift */,
 				F72D074C206A93F100ABC350 /* FileProviderItem.swift */,
-				F7BB9CAC206BDBC500AF8F4D /* FileProviderExtension.swift */,
+				F7BB9CAE206BDF2A00AF8F4D /* FileProvider.swift */,
 			);
 			path = PickerFileProvider;
 			sourceTree = "<group>";
@@ -3743,7 +3743,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F7BB50D91F2238A300C47094 /* OCXMLParser.m in Sources */,
-				F7BB9CAD206BDBC500AF8F4D /* FileProviderExtension.swift in Sources */,
 				F7BB50D11F22388900C47094 /* OCSharedDto.m in Sources */,
 				F7BB50CB1F22386900C47094 /* OCCommunication.m in Sources */,
 				F7BB50D31F22388E00C47094 /* OCUserProfile.m in Sources */,
@@ -3795,6 +3794,7 @@
 				F7BB50F41F2239B600C47094 /* BKPasscodeDummyViewController.m in Sources */,
 				F7BB50C41F22379800C47094 /* NSString+TruncateToWidth.m in Sources */,
 				F7BB50E31F2238D200C47094 /* AFURLResponseSerialization.m in Sources */,
+				F7BB9CAF206BDF2A00AF8F4D /* FileProvider.swift in Sources */,
 				F782952F1F962EF900A572F5 /* NCEndToEndEncryption.m in Sources */,
 				F7BB50EB1F22391000C47094 /* MBProgressHUD.m in Sources */,
 				F7BB50D21F22388B00C47094 /* OCShareUser.m in Sources */,

@@ -22,10 +22,10 @@
 	<string>00001</string>
 	<key>NSExtension</key>
 	<dict>
-		<key>NSExtensionFileProviderSupportsEnumeration</key>
-		<true/>
 		<key>NSExtensionFileProviderDocumentGroup</key>
 		<string>group.it.twsweb.Crypto-Cloud</string>
+		<key>NSExtensionFileProviderSupportsEnumeration</key>
+		<true/>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.fileprovider-nonui</string>
 		<key>NSExtensionPrincipalClass</key>
@@ -33,7 +33,5 @@
 	</dict>
 	<key>NSExtensionFileProviderSupportsEnumeration</key>
 	<true/>
-	<key></key>
-	<string></string>
 </dict>
 </plist>
