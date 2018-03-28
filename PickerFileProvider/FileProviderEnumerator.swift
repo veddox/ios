@@ -22,6 +22,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     }
 
     func enumerateItems(for observer: NSFileProviderEnumerationObserver, startingAt page: NSFileProviderPage) {
+        
         /* TODO:
          - inspect the page to determine whether this is an initial or a follow-up request
          
@@ -31,8 +32,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
          - perform a server request to update your local database
          - fetch the active set from your local database
          
-         - inform the observer about the items returned by the server (possibly multiple times)
-         - inform the observer that you are finished with this page
+         
          */
         
         var items: [NSFileProviderItemProtocol] = []

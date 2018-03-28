@@ -23,7 +23,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var filename: String = ""
     var typeIdentifier: String = ""
     var childItemCount: NSNumber?
-    var fileID: String = ""
+    var metadata = tableMetadata()
     
     init(metadata: tableMetadata, root: Bool) {
         
@@ -39,7 +39,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.parentItemIdentifier = NSFileProviderItemIdentifier("\(metadata.directoryID)")
         }
         
-        self.fileID = metadata.fileID
+        self.metadata = metadata
         self.filename = metadata.fileNameView
 
         if (metadata.directory) {
