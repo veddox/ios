@@ -999,8 +999,8 @@
 
 + (NSString *)insertTypeFileIconName:(NSString *)fileNameView metadata:(tableMetadata *)metadata
 {
-    CFStringRef fileUTI;
-    NSString *returnFileUTI;
+    CFStringRef fileUTI = nil;
+    NSString *returnFileUTI = nil;
     
     if ([fileNameView isEqualToString:@"."]) {
         
@@ -1090,7 +1090,7 @@
         }
     }
     
-    if (fileUTI) {
+    if (fileUTI != nil) {
         returnFileUTI = (__bridge NSString *)fileUTI;
         CFRelease(fileUTI);
     }
