@@ -174,4 +174,28 @@ class FileProvider: NSFileProviderExtension {
         return enumerator
     }
     
+    override func fetchThumbnails(for itemIdentifiers: [NSFileProviderItemIdentifier], requestedSize size: CGSize, perThumbnailCompletionHandler: @escaping (NSFileProviderItemIdentifier, Data?, Error?) -> Void, completionHandler: @escaping (Error?) -> Void) -> Progress {
+        
+        let progress = Progress(totalUnitCount: Int64(itemIdentifiers.count))
+        
+//        let image = UIImage(named: "doc_icon")
+//        let imagePNG = UIImagePNGRepresentation(image!) as! Data
+        
+        for item in itemIdentifiers {            
+            if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
+                if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, item.rawValue))  {
+                    if (metadata.typeFile == k_metadataTypeFile_image || metadata.typeFile == k_metadataTypeFile_video) {
+//                        if ([[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@/%@.ico", appDelegate.directoryUser, metadataNet.fileID]])
+//                        appDelegate.directoryUser = [CCUtility getDirectoryActiveUser:appDelegate.activeUser activeUrl:appDelegate.activeUrl];
+                        let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
+                        
+                    }
+                }
+            }
+//          perThumbnailCompletionHandler(item, imagePNG, nil)
+        }
+        
+        return progress
+        
+    }
 }
