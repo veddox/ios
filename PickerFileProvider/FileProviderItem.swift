@@ -30,21 +30,17 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     init(metadata: tableMetadata, root: Bool) {
         
         if #available(iOSApplicationExtension 11.0, *) {
-            if root {
+            self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
+            if !root {
                 self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
-            } else {
                 if let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, metadata.directoryID))  {
                     if let metadataParent = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", metadata.account, directoryParent.fileID))  {
                         self.parentItemIdentifier = NSFileProviderItemIdentifier(metadataParent.fileID)
-                    } else {
-                        self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
                     }
-                } else {
-                    self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
                 }
             }
         } else {
-            self.parentItemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
+            self.parentItemIdentifier = NSFileProviderItemIdentifier("")
         }
         
         self.metadata = metadata
