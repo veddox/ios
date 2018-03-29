@@ -178,24 +178,26 @@ class FileProvider: NSFileProviderExtension {
         
         let progress = Progress(totalUnitCount: Int64(itemIdentifiers.count))
         
-//        let image = UIImage(named: "doc_icon")
-//        let imagePNG = UIImagePNGRepresentation(image!) as! Data
-        
         for item in itemIdentifiers {            
             if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
                 if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, item.rawValue))  {
                     if (metadata.typeFile == k_metadataTypeFile_image || metadata.typeFile == k_metadataTypeFile_video) {
-//                        if ([[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@/%@.ico", appDelegate.directoryUser, metadataNet.fileID]])
-//                        appDelegate.directoryUser = [CCUtility getDirectoryActiveUser:appDelegate.activeUser activeUrl:appDelegate.activeUrl];
                         let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-                        
+                        let imagePath = "\(directoryUser!)/\(metadata.fileID).ico"
+                        let imageUrl = NSURL(fileURLWithPath: imagePath)
+                        if fileManager.fileExists(atPath: imagePath) {
+                            if let data = NSData(contentsOf: imageUrl as URL) {
+                                let image = UIImage(data: data as Data)
+                                let imagePNG = UIImagePNGRepresentation(image!)
+                                perThumbnailCompletionHandler(item, imagePNG, nil)
+                            }
+                        }
                     }
                 }
             }
-//          perThumbnailCompletionHandler(item, imagePNG, nil)
         }
         
+        completionHandler(nil)
         return progress
-        
     }
 }
