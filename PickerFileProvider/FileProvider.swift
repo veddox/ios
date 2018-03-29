@@ -20,17 +20,42 @@ class FileProvider: NSFileProviderExtension {
         super.init()
     }
     
-    /*
     override func item(for identifier: NSFileProviderItemIdentifier) throws -> NSFileProviderItem {
-        // resolve the given identifier to a record in the model
+        
+        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
+            throw NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:])
+        }
+        
+        if identifier == .rootContainer {
+            
+            if let serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)  {
+                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl)) {
+                    
+                    let metadata = tableMetadata()
+                    metadata.account = activeAccount.account
+                    metadata.directory = true
+                    metadata.directoryID = directory.directoryID
+                    metadata.fileID = directory.fileID
+                    metadata.fileName = "."
+                    metadata.fileNameView = "."
+                    metadata.typeFile = k_metadataTypeFile_directory
+                    
+                    return FileProviderItem(metadata: metadata, root: true)
+                }
+            }
+        }
+        
+        if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, identifier.rawValue))  {
+            return FileProviderItem(metadata: metadata, root: false)
+        }
         
         // TODO: implement the actual lookup
-        return FileProviderItem()
+        throw NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:])
     }
-    */
     
     override func urlForItem(withPersistentIdentifier identifier: NSFileProviderItemIdentifier) -> URL? {
         // resolve the given identifier to a file on disk
+                
         guard let item = try? item(for: identifier) else {
             return nil
         }

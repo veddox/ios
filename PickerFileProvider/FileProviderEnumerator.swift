@@ -39,7 +39,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl))  {
                         if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, directory.directoryID), sorted: "fileName", ascending: true) {
                             for metadata in metadatas {
-                                let item = FileProviderItem(metadata: metadata, parent: "", root: true)
+                                let item = FileProviderItem(metadata: metadata, root: true)
                                 items.append(item)
                             }
                         }
@@ -49,13 +49,12 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             } else {
                 
                 if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, enumeratedItemIdentifier.rawValue))  {
-                    let parent = metadata.fileID
                     if let directorySource = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID))  {
                         let serverUrl = directorySource.serverUrl + "/" + metadata.fileName
                         if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl))  {
                             if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, directory.directoryID), sorted: "fileName", ascending: true) {
                                 for metadata in metadatas {
-                                    let item = FileProviderItem(metadata: metadata, parent: parent, root: false)
+                                    let item = FileProviderItem(metadata: metadata, root: false)
                                     items.append(item)
                                 }
                             }

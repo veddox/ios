@@ -24,8 +24,21 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var typeIdentifier: String = ""
     var childItemCount: NSNumber?
     var metadata = tableMetadata()
+    var isShared: Bool = false
+    var isDownloaded: Bool = false
     
-    init(metadata: tableMetadata, parent: String, root: Bool) {
+    var parent: String = ""
+    
+    init(metadata: tableMetadata, root: Bool) {
+        
+        // Parent
+        if (!root) {
+            if let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, metadata.directoryID))  {
+                if let metadataParent = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", metadata.account, directoryParent.fileID))  {
+                    parent = metadataParent.fileID
+                }
+            }
+        }
         
         if #available(iOSApplicationExtension 11.0, *) {
             if root {
@@ -46,6 +59,10 @@ class FileProviderItem: NSObject, NSFileProviderItem {
         }
         
         if (metadata.directory) {
+    
+            if (root == true && metadata.fileNameView == ".") {
+                return
+            }
             
             self.childItemCount = 0
             
@@ -59,4 +76,5 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             }
         }
     }
+    
 }
