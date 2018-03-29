@@ -15,7 +15,7 @@ import MobileCoreServices
 class FileProvider: NSFileProviderExtension {
     
     var fileManager = FileManager()
-    
+
     override init() {
         super.init()
     }
@@ -43,12 +43,12 @@ class FileProvider: NSFileProviderExtension {
                     return FileProviderItem(metadata: metadata, root: true)
                 }
             }
-        }
+        } else {
         
-        if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, identifier.rawValue))  {
-            return FileProviderItem(metadata: metadata, root: false)
+            if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, identifier.rawValue))  {
+                return FileProviderItem(metadata: metadata, root: false)
+            }
         }
-        
         // TODO: implement the actual lookup
         throw NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:])
     }
@@ -64,7 +64,11 @@ class FileProvider: NSFileProviderExtension {
         let manager = NSFileProviderManager.default
         let perItemDirectory = manager.documentStorageURL.appendingPathComponent(identifier.rawValue, isDirectory: true)
         
-        return perItemDirectory.appendingPathComponent(item.filename, isDirectory:false)
+        if item.typeIdentifier == (kUTTypeFolder as String) {
+            return perItemDirectory.appendingPathComponent(item.filename, isDirectory:true)
+        } else {
+            return perItemDirectory.appendingPathComponent(item.filename, isDirectory:false)
+        }
     }
     
     override func persistentIdentifierForItem(at url: URL) -> NSFileProviderItemIdentifier? {
@@ -75,7 +79,8 @@ class FileProvider: NSFileProviderExtension {
         // <base storage directory>/<item identifier>/<item file name> above
         assert(pathComponents.count > 2)
         
-        return NSFileProviderItemIdentifier(pathComponents[pathComponents.count - 2])
+        let itemIdentifier = NSFileProviderItemIdentifier(pathComponents[pathComponents.count - 2])
+        return itemIdentifier
     }
     
     override func providePlaceholder(at url: URL, completionHandler: @escaping (Error?) -> Void) {
@@ -85,10 +90,41 @@ class FileProvider: NSFileProviderExtension {
         }
 
         do {
+            NSLog("persistentIdentifier = %@", identifier.rawValue)
             let fileProviderItem = try item(for: identifier)
+            NSLog("fileProviderItem = %@", fileProviderItem.description)
             let placeholderURL = NSFileProviderManager.placeholderURL(for: url)
-            try NSFileProviderManager.writePlaceholder(at: placeholderURL,withMetadata: fileProviderItem)
-            completionHandler(nil)
+            let placecholderDirectoryUrl = placeholderURL.deletingLastPathComponent()
+            var createDirectoryError:Error?
+           
+            if (!fileManager.fileExists(atPath: placecholderDirectoryUrl.path)) {
+            
+                var error: NSError?
+                let fileCoordinator = NSFileCoordinator()
+            
+                fileCoordinator.purposeIdentifier = self.providerIdentifier
+                fileCoordinator.coordinate(writingItemAt: placecholderDirectoryUrl, options: NSFileCoordinator.WritingOptions(rawValue: 0), error: &error, byAccessor: { (newUrl) in
+                    
+                    do {
+                        createDirectoryError = error;
+                        if (error == nil) {
+                            try fileManager.createDirectory(at: newUrl, withIntermediateDirectories: true, attributes: nil)
+                        }
+                    } catch let error {
+                        createDirectoryError = error
+                    }
+                })
+            }
+        
+            if let placeholderError = createDirectoryError {
+                throw placeholderError
+            }
+            else {
+                NSLog("placeholderURL = %@", placeholderURL.absoluteString)
+                try NSFileProviderManager.writePlaceholder(at: placeholderURL, withMetadata: fileProviderItem)
+                completionHandler(nil)
+            }
+            
         } catch let error {
             completionHandler(error)
         }

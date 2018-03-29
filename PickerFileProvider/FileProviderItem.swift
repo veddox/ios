@@ -13,6 +13,8 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     // TODO: implement an initializer to create an item from your extension's backing model
     // TODO: implement the accessors to return the values from your extension's backing model
 
+    var fileManager = FileManager()
+
     var itemIdentifier: NSFileProviderItemIdentifier
     var parentItemIdentifier: NSFileProviderItemIdentifier
     
@@ -25,7 +27,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var childItemCount: NSNumber?
     var metadata = tableMetadata()
     var isShared: Bool = false
-    var isDownloaded: Bool = false
+   // var isDownloaded: Bool = false
     
     init(metadata: tableMetadata, root: Bool) {
         
@@ -62,6 +64,17 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                     if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, directory.directoryID), sorted: "fileName", ascending: true) {
                         self.childItemCount = metadatas.count as NSNumber
                     }
+                }
+            }
+        }
+        
+        // is Downloaded
+        if (!metadata.directory) {
+            if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
+                let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
+                let filePath = "\(directoryUser!)/\(metadata.fileID)"
+                if fileManager.fileExists(atPath: filePath) {
+                    //self.isDownloaded = true
                 }
             }
         }
