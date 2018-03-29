@@ -39,7 +39,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl))  {
                         if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, directory.directoryID), sorted: "fileName", ascending: true) {
                             for metadata in metadatas {
-                                let item = FileProviderItem(metadata: metadata, root: true)
+                                let item = FileProviderItem(metadata: metadata, root: false)
                                 items.append(item)
                             }
                         }

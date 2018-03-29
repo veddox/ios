@@ -27,43 +27,37 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var isShared: Bool = false
     var isDownloaded: Bool = false
     
-    var parent: String = ""
-    
     init(metadata: tableMetadata, root: Bool) {
-        
-        // Parent
-        if (!root) {
-            if let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, metadata.directoryID))  {
-                if let metadataParent = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", metadata.account, directoryParent.fileID))  {
-                    parent = metadataParent.fileID
-                }
-            }
-        }
         
         if #available(iOSApplicationExtension 11.0, *) {
             if root {
                 self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
             } else {
-                self.parentItemIdentifier = NSFileProviderItemIdentifier(parent)
+                if let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, metadata.directoryID))  {
+                    if let metadataParent = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", metadata.account, directoryParent.fileID))  {
+                        self.parentItemIdentifier = NSFileProviderItemIdentifier(metadataParent.fileID)
+                    } else {
+                        self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
+                    }
+                } else {
+                    self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
+                }
             }
         } else {
-            self.parentItemIdentifier = NSFileProviderItemIdentifier(parent)
+            self.parentItemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
         }
         
         self.metadata = metadata
         self.filename = metadata.fileNameView
-        itemIdentifier =  NSFileProviderItemIdentifier("\(metadata.fileID)")
+        itemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
         
         if let fileType = CCUtility.insertTypeFileIconName(metadata.fileNameView, metadata: metadata) {
             self.typeIdentifier = fileType 
         }
         
-        if (metadata.directory) {
+        // Calculate number of children
+        if (metadata.directory && root == false) {
     
-            if (root == true && metadata.fileNameView == ".") {
-                return
-            }
-            
             self.childItemCount = 0
             
             if var serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) {
