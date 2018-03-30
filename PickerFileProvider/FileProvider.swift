@@ -280,9 +280,8 @@ class FileProvider: NSFileProviderExtension {
     
     func createFileProviderItem(_ fileProviderItem: String, metadata: tableMetadata) {
         
-        guard let groupURL = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
-                return nil
+        guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
+            return
         }
         
         var storagePathUrl = groupURL.appendingPathComponent("File Provider Storage")
