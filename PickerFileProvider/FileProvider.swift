@@ -47,7 +47,9 @@ class FileProvider: NSFileProviderExtension {
         
             if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, identifier.rawValue))  {
                 
-                createFileProviderItem(identifier.rawValue, metadata: metadata)
+                if (!metadata.directory) {
+                    createFileProviderItem(identifier.rawValue,fileName: metadata.fileNameView)
+                }
                 
                 return FileProviderItem(metadata: metadata, root: false)
             }
@@ -276,9 +278,7 @@ class FileProvider: NSFileProviderExtension {
         return progress
     }
     
-    // UTILITY //
-    
-    func createFileProviderItem(_ fileProviderItem: String, metadata: tableMetadata) {
+    func createFileProviderItem(_ fileProviderItem: String, fileName: String) {
         
         guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
             return
@@ -298,16 +298,18 @@ class FileProvider: NSFileProviderExtension {
         }
         
         // ??? move o create 0 file .. is correct ???
-        if (!metadata.directory) {
-            if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
-                let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-                let atFilePath = "\(directoryUser!)/\(fileProviderItem)"
-                let toFilePath = "\(storagePath)/\(metadata.fileNameView)"
-                if fileManager.fileExists(atPath: atFilePath) {
-                    try? fileManager.copyItem(atPath: atFilePath, toPath: toFilePath)
-                } else {
-                    fileManager.createFile(atPath: toFilePath, contents: nil, attributes: nil)
-                }
+        if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
+                
+            let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
+            let atFilePath = "\(directoryUser!)/\(fileProviderItem)"
+            let toFilePath = "\(storagePath)/\(fileName)"
+                
+            try? fileManager.removeItem(atPath: toFilePath)
+
+            if fileManager.fileExists(atPath: atFilePath) {
+                try? fileManager.copyItem(atPath: atFilePath, toPath: toFilePath)
+            } else {
+                fileManager.createFile(atPath: toFilePath, contents: nil, attributes: nil)
             }
         }
     }
