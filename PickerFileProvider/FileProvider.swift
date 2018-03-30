@@ -261,4 +261,29 @@ class FileProvider: NSFileProviderExtension {
         completionHandler(nil)
         return progress
     }
+    
+    // UTILITY //
+    
+    func createFileProviderItem(_ fileProviderItem: String) -> URL? {
+        
+        guard let groupURL = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
+                return nil
+        }
+        
+        var storagePathUrl = groupURL.appendingPathComponent("File Provider Storage")
+        storagePathUrl = storagePathUrl.appendingPathComponent(fileProviderItem)
+        let storagePath = storagePathUrl.path
+        
+        if !FileManager.default.fileExists(atPath: storagePath) {
+            do {
+                try FileManager.default.createDirectory(atPath: storagePath, withIntermediateDirectories: false, attributes: nil)
+            } catch let error {
+                print("error creating filepath: \(error)")
+                return nil
+            }
+        }
+        
+        return storagePathUrl
+    }
 }
