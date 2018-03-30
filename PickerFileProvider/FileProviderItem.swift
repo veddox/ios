@@ -76,11 +76,12 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                 let filePath = "\(directoryUser!)/\(metadata.fileID)"
                 if fileManager.fileExists(atPath: filePath) {
                     self.isDownloaded = true
-                    let url = URL.init(fileURLWithPath:filePath)
                     do {
+                        let url = URL.init(fileURLWithPath:filePath)
                         let data = try Data.init(contentsOf: url)
                         self.versionIdentifier = NCEndToEndEncryption.sharedManager().hashValueMD5(of: data)
                     } catch {
+                        print("error read data")
                     }
                 }
             }
