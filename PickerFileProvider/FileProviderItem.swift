@@ -28,6 +28,8 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var metadata = tableMetadata()
     var isShared: Bool = false
    // var isDownloaded: Bool = false
+    var versionIdentifier: Data?
+
     
     init(metadata: tableMetadata, root: Bool) {
         
@@ -79,5 +81,4 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             }
         }
     }
-    
 }
