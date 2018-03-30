@@ -131,7 +131,21 @@ class FileProvider: NSFileProviderExtension {
          }
          */
         
-        completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+        do {
+            let attr = try fileManager.attributesOfItem(atPath: url.path)
+            let fileSize = attr[FileAttributeKey.size] as! UInt64
+            
+            if fileSize == 0 {
+                completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+            } else {
+                completionHandler(nil)
+            }
+            
+        } catch {
+            print("Error: \(error)")
+            completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+        }
+        
     }
     
     
