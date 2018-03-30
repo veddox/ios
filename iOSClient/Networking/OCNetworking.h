@@ -42,6 +42,8 @@
 @property (nonatomic, assign) BOOL isExecuting;
 @property (nonatomic, assign) BOOL isFinished;
 
+- (void)downloadThumbnailWithDimOfThumbnail:(NSString *)dimOfThumbnail fileName:(NSString *)fileName fileNameLocal:(NSString *)fileNameLocal success:(void (^)(NSData* data))success failure:(void (^)(void))failure;
+
 @end
 
 @protocol OCNetworkingDelegate <NSObject>

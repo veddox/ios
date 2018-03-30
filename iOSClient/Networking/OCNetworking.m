@@ -201,6 +201,46 @@
     }];
 }
 
+- (void)downloadThumbnailWithDimOfThumbnail:(NSString *)dimOfThumbnail fileName:(NSString *)fileName fileNameLocal:(NSString *)fileNameLocal success:(void (^)(NSData* data))success failure:(void (^)(void))failure
+{
+    OCCommunication *communication = [CCNetworking sharedNetworking].sharedOCCommunication;
+    __block NSString *ext;
+    NSInteger width = 0, height = 0;
+    
+    NSString *directoryUser = [CCUtility getDirectoryActiveUser:_activeUser activeUrl:_activeUrl];
+    
+    if ([dimOfThumbnail.lowercaseString isEqualToString:@"xs"])      { width = 32;   height = 32;  ext = @"ico"; }
+    else if ([dimOfThumbnail.lowercaseString isEqualToString:@"s"])  { width = 64;   height = 64;  ext = @"ico"; }
+    else if ([dimOfThumbnail.lowercaseString isEqualToString:@"m"])  { width = 128;  height = 128; ext = @"ico"; }
+    else if ([dimOfThumbnail.lowercaseString isEqualToString:@"l"])  { width = 640;  height = 640; ext = @"pvw"; }
+    else if ([dimOfThumbnail.lowercaseString isEqualToString:@"xl"]) { width = 1024; height = 1024; ext = @"pvw"; }
+    
+    NSString *fileNamePathLocal = [NSString stringWithFormat:@"%@/%@.%@", directoryUser, fileNameLocal, ext];
+
+    if ([[NSFileManager defaultManager] fileExistsAtPath:fileNamePathLocal]) {
+        
+        NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:fileNamePathLocal]];
+        success(data);
+        
+    } else {
+    
+        [communication setCredentialsWithUser:_activeUser andUserID:_activeUserID andPassword:_activePassword];
+        [communication setUserAgent:[CCUtility getUserAgent]];
+    
+        [communication getRemoteThumbnailByServer:[_activeUrl stringByAppendingString:@"/"] ofFilePath:fileName withWidth:width andHeight:height onCommunication:communication successRequest:^(NSHTTPURLResponse *response, NSData *thumbnail, NSString *redirectedServer) {
+        
+            UIImage *thumbnailImage = [UIImage imageWithData:thumbnail];
+            [CCGraphics saveIcoWithEtag:fileNameLocal image:thumbnailImage writeToFile:fileNamePathLocal copy:NO move:NO fromPath:nil toPath:nil];
+        
+            success(thumbnail);
+        
+        } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
+    
+            failure();
+        }];
+    }
+}
+
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ===== Read Folder =====
 #pragma --------------------------------------------------------------------------------------------

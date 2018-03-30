@@ -145,7 +145,6 @@ class FileProvider: NSFileProviderExtension {
             print("Error: \(error)")
             completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
         }
-        
     }
     
     
@@ -226,22 +225,37 @@ class FileProvider: NSFileProviderExtension {
     override func fetchThumbnails(for itemIdentifiers: [NSFileProviderItemIdentifier], requestedSize size: CGSize, perThumbnailCompletionHandler: @escaping (NSFileProviderItemIdentifier, Data?, Error?) -> Void, completionHandler: @escaping (Error?) -> Void) -> Progress {
         
         let progress = Progress(totalUnitCount: Int64(itemIdentifiers.count))
+        var counterProgress: Int64 = 0
         
-        for item in itemIdentifiers {            
-            if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
-                if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, item.rawValue))  {
-                    if (metadata.typeFile == k_metadataTypeFile_image || metadata.typeFile == k_metadataTypeFile_video) {
-                        let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-                        let imagePath = "\(directoryUser!)/\(metadata.fileID).ico"
-                        let imageUrl = NSURL(fileURLWithPath: imagePath)
-                        if fileManager.fileExists(atPath: imagePath) {
-                            if let data = NSData(contentsOf: imageUrl as URL) {
-                                let image = UIImage(data: data as Data)
-                                let imagePNG = UIImagePNGRepresentation(image!)
-                                perThumbnailCompletionHandler(item, imagePNG, nil)
-                            }
-                        }
-                    }
+        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
+            completionHandler(nil)
+            return progress
+        }
+        
+        let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
+
+        for item in itemIdentifiers {
+            
+            if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, item.rawValue))  {
+                
+                if (metadata.typeFile == k_metadataTypeFile_image || metadata.typeFile == k_metadataTypeFile_video) {
+                    
+                    let serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID)
+                    let fileName = CCUtility.returnFileNamePath(fromFileName: metadata.fileName, serverUrl: serverUrl, activeUrl: activeAccount.url)
+                    let fileNameLocal = metadata.fileID
+
+                    ocNetworking?.downloadThumbnail(withDimOfThumbnail: "m", fileName: fileName, fileNameLocal: fileNameLocal, success: { (data) in
+                        let image = UIImage(data: data!)
+                        let imagePNG = UIImagePNGRepresentation(image!)
+                        counterProgress += 1
+                        progress.completedUnitCount = counterProgress
+                        perThumbnailCompletionHandler(item, imagePNG, nil)
+                    }, failure: {
+                        let error = NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:])
+                        counterProgress += 1
+                        progress.completedUnitCount = counterProgress
+                        perThumbnailCompletionHandler(item, nil, error)
+                    })
                 }
             }
         }
