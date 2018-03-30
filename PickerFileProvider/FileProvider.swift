@@ -102,48 +102,6 @@ class FileProvider: NSFileProviderExtension {
         } catch let error {
             completionHandler(error)
         }
-        
-        /*
-        do {
-            NSLog("persistentIdentifier = %@", identifier.rawValue)
-            let fileProviderItem = try item(for: identifier)
-            NSLog("fileProviderItem = %@", fileProviderItem.description)
-            let placeholderURL = NSFileProviderManager.placeholderURL(for: url)
-            let placecholderDirectoryUrl = placeholderURL.deletingLastPathComponent()
-            var createDirectoryError:Error?
-           
-            if (!fileManager.fileExists(atPath: placecholderDirectoryUrl.path)) {
-            
-                var error: NSError?
-                let fileCoordinator = NSFileCoordinator()
-            
-                fileCoordinator.purposeIdentifier = self.providerIdentifier
-                fileCoordinator.coordinate(writingItemAt: placecholderDirectoryUrl, options: NSFileCoordinator.WritingOptions(rawValue: 0), error: &error, byAccessor: { (newUrl) in
-                    
-                    do {
-                        createDirectoryError = error;
-                        if (error == nil) {
-                            try fileManager.createDirectory(at: newUrl, withIntermediateDirectories: true, attributes: nil)
-                        }
-                    } catch let error {
-                        createDirectoryError = error
-                    }
-                })
-            }
-        
-            if let placeholderError = createDirectoryError {
-                throw placeholderError
-            }
-            else {
-                NSLog("placeholderURL = %@", placeholderURL.absoluteString)
-                try NSFileProviderManager.writePlaceholder(at: placeholderURL, withMetadata: fileProviderItem)
-                completionHandler(nil)
-            }
-            
-        } catch let error {
-            completionHandler(error)
-        }
-        */
     }
 
     override func startProvidingItem(at url: URL, completionHandler: @escaping ((_ error: Error?) -> Void)) {
