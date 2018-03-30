@@ -27,9 +27,8 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var childItemCount: NSNumber?
     var metadata = tableMetadata()
     var isShared: Bool = false
-   // var isDownloaded: Bool = false
+    var isDownloaded: Bool = false
     var versionIdentifier: Data?
-
     
     init(metadata: tableMetadata, root: Bool) {
         
@@ -76,7 +75,13 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                 let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
                 let filePath = "\(directoryUser!)/\(metadata.fileID)"
                 if fileManager.fileExists(atPath: filePath) {
-                    //self.isDownloaded = true
+                    self.isDownloaded = true
+                    let url = URL.init(fileURLWithPath:filePath)
+                    do {
+                        let data = try Data.init(contentsOf: url)
+                        self.versionIdentifier = NCEndToEndEncryption.sharedManager().hashValueMD5(of: data)
+                    } catch {
+                    }
                 }
             }
         }

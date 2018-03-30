@@ -44,5 +44,6 @@
 
 - (NSData *)generateKey:(int)length;
 - (NSString *)createSHA512:(NSString *)string;
+- (NSData *)hashValueMD5OfData:(NSData *)data;
 
 @end
