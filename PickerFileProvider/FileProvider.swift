@@ -232,10 +232,13 @@ class FileProvider: NSFileProviderExtension {
             return progress
         }
         
+        let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
         let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
 
         for item in itemIdentifiers {
             
+            counterProgress += 1
+
             if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, item.rawValue))  {
                 
                 if (metadata.typeFile == k_metadataTypeFile_image || metadata.typeFile == k_metadataTypeFile_video) {
@@ -244,23 +247,39 @@ class FileProvider: NSFileProviderExtension {
                     let fileName = CCUtility.returnFileNamePath(fromFileName: metadata.fileName, serverUrl: serverUrl, activeUrl: activeAccount.url)
                     let fileNameLocal = metadata.fileID
 
-                    ocNetworking?.downloadThumbnail(withDimOfThumbnail: "m", fileName: fileName, fileNameLocal: fileNameLocal, success: { (data) in
-                        let image = UIImage(data: data!)
-                        let imagePNG = UIImagePNGRepresentation(image!)
-                        counterProgress += 1
-                        progress.completedUnitCount = counterProgress
-                        perThumbnailCompletionHandler(item, imagePNG, nil)
+                    ocNetworking?.downloadThumbnail(withDimOfThumbnail: "m", fileName: fileName, fileNameLocal: fileNameLocal, success: {
+
+                        do {
+                            let url = URL.init(fileURLWithPath: "\(directoryUser!)/\(item.rawValue).ico")
+                            let data = try Data.init(contentsOf: url)
+                            perThumbnailCompletionHandler(item, data, nil)
+                        } catch {
+                            perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
+                        }
+                        
+                        if (counterProgress == progress.totalUnitCount) {
+                            completionHandler(nil)
+                        }
+                        
                     }, failure: {
-                        let error = NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:])
-                        counterProgress += 1
-                        progress.completedUnitCount = counterProgress
-                        perThumbnailCompletionHandler(item, nil, error)
+
+                        perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
+                        
+                        if (counterProgress == progress.totalUnitCount) {
+                            completionHandler(nil)
+                        }
+
                     })
+                    
+                } else {
+                    
+                    if (counterProgress == progress.totalUnitCount) {
+                        completionHandler(nil)
+                    }
                 }
             }
         }
         
-        completionHandler(nil)
         return progress
     }
     

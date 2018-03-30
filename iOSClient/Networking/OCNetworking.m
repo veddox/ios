@@ -201,7 +201,7 @@
     }];
 }
 
-- (void)downloadThumbnailWithDimOfThumbnail:(NSString *)dimOfThumbnail fileName:(NSString *)fileName fileNameLocal:(NSString *)fileNameLocal success:(void (^)(NSData* data))success failure:(void (^)(void))failure
+- (void)downloadThumbnailWithDimOfThumbnail:(NSString *)dimOfThumbnail fileName:(NSString *)fileName fileNameLocal:(NSString *)fileNameLocal success:(void (^)(void))success failure:(void (^)(void))failure
 {
     OCCommunication *communication = [CCNetworking sharedNetworking].sharedOCCommunication;
     __block NSString *ext;
@@ -219,8 +219,7 @@
 
     if ([[NSFileManager defaultManager] fileExistsAtPath:fileNamePathLocal]) {
         
-        NSData *data = [NSData dataWithContentsOfURL:[NSURL URLWithString:fileNamePathLocal]];
-        success(data);
+        success();
         
     } else {
     
@@ -229,10 +228,9 @@
     
         [communication getRemoteThumbnailByServer:[_activeUrl stringByAppendingString:@"/"] ofFilePath:fileName withWidth:width andHeight:height onCommunication:communication successRequest:^(NSHTTPURLResponse *response, NSData *thumbnail, NSString *redirectedServer) {
         
-            UIImage *thumbnailImage = [UIImage imageWithData:thumbnail];
-            [CCGraphics saveIcoWithEtag:fileNameLocal image:thumbnailImage writeToFile:fileNamePathLocal copy:NO move:NO fromPath:nil toPath:nil];
+            [CCGraphics saveIcoWithEtag:fileNameLocal image:[UIImage imageWithData:thumbnail] writeToFile:fileNamePathLocal copy:NO move:NO fromPath:nil toPath:nil];
         
-            success(thumbnail);
+            success();
         
         } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
     
