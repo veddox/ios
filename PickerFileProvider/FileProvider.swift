@@ -46,6 +46,9 @@ class FileProvider: NSFileProviderExtension {
         } else {
         
             if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, identifier.rawValue))  {
+                
+                createFileProviderItem(identifier.rawValue, metadata: metadata)
+                
                 return FileProviderItem(metadata: metadata, root: false)
             }
         }
@@ -90,6 +93,16 @@ class FileProvider: NSFileProviderExtension {
         }
 
         do {
+            let fileProviderItem = try item(for: identifier)
+            let placeholderURL = NSFileProviderManager.placeholderURL(for: url)
+            try NSFileProviderManager.writePlaceholder(at: placeholderURL,withMetadata: fileProviderItem)
+            completionHandler(nil)
+        } catch let error {
+            completionHandler(error)
+        }
+        
+        /*
+        do {
             NSLog("persistentIdentifier = %@", identifier.rawValue)
             let fileProviderItem = try item(for: identifier)
             NSLog("fileProviderItem = %@", fileProviderItem.description)
@@ -128,6 +141,7 @@ class FileProvider: NSFileProviderExtension {
         } catch let error {
             completionHandler(error)
         }
+        */
     }
 
     override func startProvidingItem(at url: URL, completionHandler: @escaping ((_ error: Error?) -> Void)) {
@@ -264,7 +278,7 @@ class FileProvider: NSFileProviderExtension {
     
     // UTILITY //
     
-    func createFileProviderItem(_ fileProviderItem: String) -> URL? {
+    func createFileProviderItem(_ fileProviderItem: String, metadata: tableMetadata) {
         
         guard let groupURL = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
@@ -280,10 +294,22 @@ class FileProvider: NSFileProviderExtension {
                 try FileManager.default.createDirectory(atPath: storagePath, withIntermediateDirectories: false, attributes: nil)
             } catch let error {
                 print("error creating filepath: \(error)")
-                return nil
+                return
             }
         }
         
-        return storagePathUrl
+        // ??? move o create 0 file .. is correct ???
+        if (!metadata.directory) {
+            if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
+                let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
+                let atFilePath = "\(directoryUser!)/\(fileProviderItem)"
+                let toFilePath = "\(storagePath)/\(metadata.fileNameView)"
+                if fileManager.fileExists(atPath: atFilePath) {
+                    try? fileManager.copyItem(atPath: atFilePath, toPath: toFilePath)
+                } else {
+                    fileManager.createFile(atPath: toFilePath, contents: nil, attributes: nil)
+                }
+            }
+        }
     }
 }
