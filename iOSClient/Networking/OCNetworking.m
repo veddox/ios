@@ -184,24 +184,18 @@
         
     } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
         
-        NSInteger errorCode = response.statusCode;
-        if (errorCode == 0 || (errorCode >= 200 && errorCode < 300))
-            errorCode = error.code;
+        NSString *message = [NSString new];
+        NSInteger errorCode = [self downloadThumbnailFailureResponse:response error:error message:&message];
         
-        // Error
         if ([self.delegate respondsToSelector:@selector(downloadThumbnailSuccessFailure:message:errorCode:)] && [_metadataNet.action isEqualToString:actionDownloadThumbnail]) {
-            
-            if (errorCode == 503)
-                [self.delegate downloadThumbnailSuccessFailure:_metadataNet message:NSLocalizedStringFromTable(@"_server_error_retry_", @"Error", nil) errorCode:errorCode];
-            else
-                [self.delegate downloadThumbnailSuccessFailure:_metadataNet message:[CCError manageErrorOC:response.statusCode error:error] errorCode:errorCode];
+            [self.delegate downloadThumbnailSuccessFailure:_metadataNet message:message errorCode:errorCode];
         }
-        
+       
         [self complete];
     }];
 }
 
-- (void)downloadThumbnailWithDimOfThumbnail:(NSString *)dimOfThumbnail fileName:(NSString *)fileName fileNameLocal:(NSString *)fileNameLocal success:(void (^)(void))success failure:(void (^)(void))failure
+- (void)downloadThumbnailWithDimOfThumbnail:(NSString *)dimOfThumbnail fileName:(NSString *)fileName fileNameLocal:(NSString *)fileNameLocal success:(void (^)(void))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
 {
     OCCommunication *communication = [CCNetworking sharedNetworking].sharedOCCommunication;
     __block NSString *ext;
@@ -234,10 +228,29 @@
             
         } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
             
-            failure();
+            NSString *message = [NSString new];
+            NSInteger errorCode = [self downloadThumbnailFailureResponse:response error:error message:&message];
+            
+            failure(message, errorCode);
         }];
     }
 }
+
+- (NSInteger)downloadThumbnailFailureResponse:(NSHTTPURLResponse *)response error:(NSError *)error message:(NSString **)message
+{
+    NSInteger errorCode = response.statusCode;
+    if (errorCode == 0 || (errorCode >= 200 && errorCode < 300))
+        errorCode = error.code;
+    
+    // Error
+    if (errorCode == 503)
+        *message = NSLocalizedStringFromTable(@"_server_error_retry_", @"Error", nil);
+    else
+        *message = [error.userInfo valueForKey:@"NSLocalizedDescription"];
+    
+    return errorCode;
+}
+
 
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ===== Read Folder =====

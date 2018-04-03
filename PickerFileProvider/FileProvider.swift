@@ -261,14 +261,13 @@ class FileProvider: NSFileProviderExtension {
                             completionHandler(nil)
                         }
                         
-                    }, failure: {
+                    }, failure: { (message, errorCode) in
 
                         perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
                         
                         if (counterProgress == progress.totalUnitCount) {
                             completionHandler(nil)
                         }
-
                     })
                     
                 } else {
