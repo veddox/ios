@@ -67,8 +67,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 for metadata in metadatas as! [tableMetadata] {
                     // Add record
                     if let metadata = NCManageDatabase.sharedInstance.addMetadata(metadata) {
-                        let item = FileProviderItem(metadata: metadata, root: false)
-                        items.append(item)
+                        if metadata.e2eEncrypted == false {
+                            let item = FileProviderItem(metadata: metadata, root: false)
+                            items.append(item)
+                        }
                     }
                 }
                             
