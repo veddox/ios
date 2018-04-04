@@ -135,6 +135,7 @@ class FileProvider: NSFileProviderExtension {
             let attr = try fileManager.attributesOfItem(atPath: url.path)
             let fileSize = attr[FileAttributeKey.size] as! UInt64
             
+            // Do not exists
             if fileSize == 0 {
                 
                 guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
@@ -166,7 +167,7 @@ class FileProvider: NSFileProviderExtension {
                     if (metadata.typeFile == k_metadataTypeFile_image) {
                         CCExifGeo.sharedInstance().setExifLocalTableEtag(metadata, directoryUser: directoryUser, activeAccount: account)
                     }
-                                        
+                    
                     completionHandler(nil)
                     
                 }, failure: { (message, errorCode) in
@@ -174,6 +175,8 @@ class FileProvider: NSFileProviderExtension {
                 })
                 
             } else {
+                
+                // Exists
                 completionHandler(nil)
             }
             
@@ -273,8 +276,6 @@ class FileProvider: NSFileProviderExtension {
 
         for item in itemIdentifiers {
             
-            counterProgress += 1
-
             if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, item.rawValue))  {
                 
                 if (metadata.typeFile == k_metadataTypeFile_image || metadata.typeFile == k_metadataTypeFile_video) {
@@ -293,6 +294,7 @@ class FileProvider: NSFileProviderExtension {
                             perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
                         }
                         
+                        counterProgress += 1
                         if (counterProgress == progress.totalUnitCount) {
                             completionHandler(nil)
                         }
@@ -301,6 +303,7 @@ class FileProvider: NSFileProviderExtension {
 
                         perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
                         
+                        counterProgress += 1
                         if (counterProgress == progress.totalUnitCount) {
                             completionHandler(nil)
                         }
@@ -308,9 +311,15 @@ class FileProvider: NSFileProviderExtension {
                     
                 } else {
                     
+                    counterProgress += 1
                     if (counterProgress == progress.totalUnitCount) {
                         completionHandler(nil)
                     }
+                }
+            } else {
+                counterProgress += 1
+                if (counterProgress == progress.totalUnitCount) {
+                    completionHandler(nil)
                 }
             }
         }
