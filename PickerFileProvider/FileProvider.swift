@@ -353,7 +353,7 @@ class FileProvider: NSFileProviderExtension {
             let atFilePath = "\(directoryUser!)/\(fileProviderItem)"
             let toFilePath = "\(storagePath)/\(fileName)"
                 
-            try? fileManager.removeItem(atPath: toFilePath)
+            //try? fileManager.removeItem(atPath: toFilePath)
 
             if fileManager.fileExists(atPath: atFilePath) {
                 try? fileManager.copyItem(atPath: atFilePath, toPath: toFilePath)
