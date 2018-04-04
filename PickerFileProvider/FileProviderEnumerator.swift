@@ -33,17 +33,41 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         
         if #available(iOSApplicationExtension 11.0, *) {
             
+            let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
+            
             if (enumeratedItemIdentifier == .rootContainer) {
                 
                 if let serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)  {
-                    if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl))  {
-                        if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, directory.directoryID), sorted: "fileName", ascending: true) {
-                            for metadata in metadatas {
-                                let item = FileProviderItem(metadata: metadata, root: false)
-                                items.append(item)
+                    
+                    ocNetworking?.readFolder(withServerUrl: serverUrl, depth: "1", account: activeAccount.account, success: { (metadatas, metadataFolder, directoryID) in
+                        
+                        NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", activeAccount.account, directoryID!), clearDateReadDirectoryID: directoryID!)
+                        
+                        for metadata in metadatas as! [tableMetadata] {
+                            // Add record
+                            _ = NCManageDatabase.sharedInstance.addMetadata(metadata)
+                            let item = FileProviderItem(metadata: metadata, root: false)
+                            items.append(item)
+                        }
+                        
+                        observer.didEnumerate(items)
+                        observer.finishEnumerating(upTo: nil)
+                        
+                    }, failure: { (message, errorCode) in
+                        
+                        if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl))  {
+                            if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, directory.directoryID), sorted: "fileName", ascending: true) {
+                                for metadata in metadatas {
+                                    let item = FileProviderItem(metadata: metadata, root: false)
+                                    items.append(item)
+                                }
                             }
                         }
-                    }
+                        
+                        observer.didEnumerate(items)
+                        observer.finishEnumerating(upTo: nil)
+                        
+                    })
                 }
                 
             } else {
@@ -61,11 +85,11 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                         }
                     }
                 }
+                
+                observer.didEnumerate(items)
+                observer.finishEnumerating(upTo: nil)
             }
         }
-        
-        observer.didEnumerate(items)
-        observer.finishEnumerating(upTo: nil)
     }
     
     func enumerateChanges(for observer: NSFileProviderChangeObserver, from anchor: NSFileProviderSyncAnchor) {
