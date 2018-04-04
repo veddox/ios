@@ -36,7 +36,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         
         if #available(iOSApplicationExtension 11.0, *) {
             
-            
             let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
                 
             if (enumeratedItemIdentifier == .rootContainer) {
@@ -45,8 +44,17 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     
             } else {
                     
-                serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
-
+                if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, enumeratedItemIdentifier.rawValue))  {
+                    if let directorySource = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID))  {
+                        serverUrl = directorySource.serverUrl + "/" + metadata.fileName
+                    }
+                }
+            }
+            
+            guard let serverUrl = serverUrl else {
+                observer.didEnumerate(items)
+                observer.finishEnumerating(upTo: nil)
+                return
             }
                 
             ocNetworking?.readFolder(withServerUrl: serverUrl, depth: "1", account: activeAccount.account, success: { (metadatas, metadataFolder, directoryID) in
@@ -66,7 +74,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                             
             }, failure: { (message, errorCode) in
                             
-                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", account, serverUrl!))  {
+                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", account, serverUrl))  {
                     if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, directory.directoryID), sorted: "fileName", ascending: true) {
                         for metadata in metadatas {
                             let item = FileProviderItem(metadata: metadata, root: false)
@@ -74,7 +82,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                         }
                     }
                 }
-                            
+                
                 observer.didEnumerate(items)
                 observer.finishEnumerating(upTo: nil)
                             
