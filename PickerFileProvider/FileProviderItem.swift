@@ -85,7 +85,6 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                     }
                 } else {
                     self.isDownloaded = false
-                    self.versionIdentifier = metadata.etag.data(using: .utf8)
                 }
             }
         }
