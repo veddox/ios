@@ -136,7 +136,33 @@ class FileProvider: NSFileProviderExtension {
             let fileSize = attr[FileAttributeKey.size] as! UInt64
             
             if fileSize == 0 {
-                completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                
+                guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
+                    completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                    return
+                }
+                
+                let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
+
+                let pathComponents = url.pathComponents
+                let itemIdentifier = pathComponents[pathComponents.count - 2]
+            
+                guard let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, itemIdentifier)) else {
+                    completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                    return
+                }
+                
+                guard let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID)) else {
+                    completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                    return
+                }
+
+                ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: url.path, success: {
+                    completionHandler(nil)
+                }, failure: { (message, errorCode) in
+                    completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                })
+                
             } else {
                 completionHandler(nil)
             }
