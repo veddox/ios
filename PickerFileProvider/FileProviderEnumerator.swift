@@ -37,7 +37,9 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         if #available(iOSApplicationExtension 11.0, *) {
             
             let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
-                
+            
+            // Select ServerUrl
+            
             if (enumeratedItemIdentifier == .rootContainer) {
                     
                 serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
@@ -56,7 +58,9 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 observer.finishEnumerating(upTo: nil)
                 return
             }
-                
+            
+            // Read Folder
+            
             ocNetworking?.readFolder(withServerUrl: serverUrl, depth: "1", account: activeAccount.account, success: { (metadatas, metadataFolder, directoryID) in
                             
                 NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", account, directoryID!), clearDateReadDirectoryID: directoryID!)
@@ -85,7 +89,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 
                 observer.didEnumerate(items)
                 observer.finishEnumerating(upTo: nil)
-                            
             })
         }
     }
