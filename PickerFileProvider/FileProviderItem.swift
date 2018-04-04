@@ -83,6 +83,9 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                     } catch {
                         print("error read data")
                     }
+                } else {
+                    self.isDownloaded = false
+                    self.versionIdentifier = metadata.etag.data(using: .utf8)
                 }
             }
         }
