@@ -142,6 +142,7 @@ class FileProvider: NSFileProviderExtension {
                     return
                 }
                 
+                let account = activeAccount.account
                 let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
 
                 let pathComponents = url.pathComponents
@@ -160,7 +161,14 @@ class FileProvider: NSFileProviderExtension {
                 let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
 
                 ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser!)/\(itemIdentifier)", success: {
+                    
+                    NCManageDatabase.sharedInstance.addLocalFile(metadata: metadata)
+                    if (metadata.typeFile == k_metadataTypeFile_image) {
+                        CCExifGeo.sharedInstance().setExifLocalTableEtag(metadata, directoryUser: directoryUser, activeAccount: account)
+                    }
+                                        
                     completionHandler(nil)
+                    
                 }, failure: { (message, errorCode) in
                     completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
                 })

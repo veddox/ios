@@ -32,10 +32,9 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             return
         }
         
-        let account = activeAccount.account
-        
         if #available(iOSApplicationExtension 11.0, *) {
             
+            let account = activeAccount.account
             let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
             
             // Select ServerUrl
