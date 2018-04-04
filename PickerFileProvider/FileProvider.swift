@@ -157,7 +157,9 @@ class FileProvider: NSFileProviderExtension {
                     return
                 }
 
-                ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: url.path, success: {
+                let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
+
+                ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser!)/\(itemIdentifier)", success: {
                     completionHandler(nil)
                 }, failure: { (message, errorCode) in
                     completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))

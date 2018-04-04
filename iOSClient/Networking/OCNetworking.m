@@ -141,7 +141,7 @@
     
     [communication downloadFileSession:fileNameServerUrl toDestiny:fileNameLocalPath defaultPriority:YES onCommunication:communication progress:^(NSProgress *progress) {
 
-        float percent = roundf (progress.fractionCompleted * 100);
+        //float percent = roundf (progress.fractionCompleted * 100);
 
     } successRequest:^(NSURLResponse *response, NSURL *filePath) {
 
