@@ -27,8 +27,9 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var childItemCount: NSNumber?
     var metadata = tableMetadata()
     var isShared: Bool = false
-    var isDownloaded: Bool = false
+    var isDownloaded: Bool = true
     var versionIdentifier: Data?
+    var documentSize: NSNumber?
     
     init(metadata: tableMetadata, root: Bool) {
         
@@ -87,6 +88,8 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                     self.isDownloaded = false
                     self.versionIdentifier = metadata.etag.data(using: .utf8)
                 }
+                
+                self.documentSize = NSNumber(value: metadata.size)
             }
         }
     }
