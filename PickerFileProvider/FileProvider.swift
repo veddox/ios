@@ -362,4 +362,13 @@ class FileProvider: NSFileProviderExtension {
             }
         }
     }
+    
+    override func importDocument(at fileURL: URL, toParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
+        
+        print("Import document")
+        
+        completionHandler(nil, nil)
+//
+    }
+
 }
