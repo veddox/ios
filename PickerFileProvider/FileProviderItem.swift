@@ -28,6 +28,8 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var metadata = tableMetadata()
     var isShared: Bool = false
     var isDownloaded: Bool = true
+    var isMostRecentVersionDownloaded: Bool = true
+    var isUploaded: Bool = true
     var versionIdentifier: Data?
     var documentSize: NSNumber?
     
@@ -77,18 +79,11 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                 let filePath = "\(directoryUser!)/\(metadata.fileID)"
                 if fileManager.fileExists(atPath: filePath) {
                     self.isDownloaded = true
-                    do {
-                        let url = URL.init(fileURLWithPath:filePath)
-                        let data = try Data.init(contentsOf: url)
-                        self.versionIdentifier = NCEndToEndEncryption.sharedManager().hashValueMD5(of: data)
-                    } catch {
-                        print("error read data")
-                    }
                 } else {
                     self.isDownloaded = false
-                    self.versionIdentifier = metadata.etag.data(using: .utf8)
                 }
                 
+                self.versionIdentifier = metadata.etag.data(using: .utf8)
                 self.documentSize = NSNumber(value: metadata.size)
             }
         }
