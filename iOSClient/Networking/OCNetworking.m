@@ -873,7 +873,7 @@
     }];
 }
 
-- (void)createFolder:(NSString *)fileName serverUrl:(NSString *)serverUrl success:(void(^)(NSString *fileID, NSDate *date))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
+- (void)createFolder:(NSString *)fileName serverUrl:(NSString *)serverUrl account:(NSString *)account success:(void(^)(NSString *fileID, NSDate *date))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
 {
     OCCommunication *communication = [CCNetworking sharedNetworking].sharedOCCommunication;
     
@@ -884,12 +884,19 @@
     
     [communication createFolder:serverFileUrl onCommunication:communication withForbiddenCharactersSupported:YES successRequest:^(NSHTTPURLResponse *response, NSString *redirectedServer) {
 
-        NSDictionary *fields = [response allHeaderFields];
-        
-        NSString *fileID = [CCUtility removeForbiddenCharactersFileSystem:[fields objectForKey:@"OC-FileId"]];
-        NSDate *date = [CCUtility dateEnUsPosixFromCloud:[fields objectForKey:@"Date"]];
-        
-        success(fileID, date);
+        if (![[[NCManageDatabase sharedInstance] getAccountActive].account isEqualToString:account]) {
+            
+            failure(NSLocalizedStringFromTable(@"_error_user_not_available_", @"Error", nil), k_CCErrorUserNotAvailble);
+            
+        } else {
+            
+            NSDictionary *fields = [response allHeaderFields];
+            
+            NSString *fileID = [CCUtility removeForbiddenCharactersFileSystem:[fields objectForKey:@"OC-FileId"]];
+            NSDate *date = [CCUtility dateEnUsPosixFromCloud:[fields objectForKey:@"Date"]];
+            
+            success(fileID, date);
+        }
         
     } failureRequest:^(NSHTTPURLResponse *response, NSError *error, NSString *redirectedServer) {
 
@@ -897,16 +904,12 @@
 
     } errorBeforeRequest:^(NSError *error) {
         
-        NSString *message = @"";
+        NSString *message;
     
         if (error.code == OCErrorForbidenCharacters)
             message = NSLocalizedStringFromTable(@"_forbidden_characters_from_server_", @"Error", nil);
         else
             message = NSLocalizedStringFromTable(@"_unknow_response_server_", @"Error", nil);
-        
-        // Error
-        if (error.code == 503)
-            message:NSLocalizedStringFromTable(@"_server_error_retry_", @"Error", nil);
         
         failure(message, error.code);
     }];
