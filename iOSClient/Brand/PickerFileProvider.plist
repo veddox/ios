@@ -31,5 +31,7 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).FileProvider</string>
 	</dict>
+	<key>NSExtensionFileProviderSupportsEnumeration</key>
+	<true/>
 </dict>
 </plist>

@@ -15,47 +15,23 @@ class FileProviderItem: NSObject, NSFileProviderItem {
 
     var fileManager = FileManager()
 
-    // Providing Required Properties
-    var itemIdentifier: NSFileProviderItemIdentifier                // The item's persistent identifier
-    var filename: String = ""                                       // The item's filename
-    var typeIdentifier: String = ""                                 // The item's uniform type identifiers
-    var capabilities: NSFileProviderItemCapabilities {              // The item's capabilities
-        
-        if self.metadata.directory {
-            return .allowsContentEnumerating
-        } else {
-            return .allowsReading
-
-        }
+    var itemIdentifier: NSFileProviderItemIdentifier
+    var parentItemIdentifier: NSFileProviderItemIdentifier
+    
+    var capabilities: NSFileProviderItemCapabilities {
+        return .allowsAll
     }
     
-    // Managing Content
-    var childItemCount: NSNumber?                                   // The number of items contained by this item
-    var documentSize: NSNumber?                                     // The document's size, in bytes
-
-    // Specifying Content Location
-    var parentItemIdentifier: NSFileProviderItemIdentifier          // The persistent identifier of the item's parent folder
-    var isTrashed: Bool = false                                     // A Boolean value that indicates whether an item is in the trash
-   
-    // Tracking Usage
-    var contentModificationDate: Date?                              // The date the item was last modified
-    var creationDate: Date?                                         // The date the item was created
-    var lastUsedDate: Date?                                         // The date the item was last used
-
-    // Tracking Versions
-    var versionIdentifier: Data?                                    // A data value used to determine when the item changes
-    var isMostRecentVersionDownloaded: Bool = false                 // A Boolean value that indicates whether the item is the most recent version downloaded from the server
-
-    // Monitoring File Transfers
-    var isUploading: Bool = false                                   // A Boolean value that indicates whether the item is currently uploading to your remote server
-    var isUploaded: Bool = true                                     // A Boolean value that indicates whether the item has been uploaded to your remote server
-    var uploadingError: Error?                                      // An error that occurred while uploading to your remote server
-    var isDownloading: Bool = false                                 // A Boolean value that indicates whether the item is currently downloading from your remote server
-    var isDownloaded: Bool = true                                   // A Boolean value that indicates whether the item has been downloaded from your remote server
-    var downloadingError: Error?                                    // An error that occurred while downloading the item
-
-    // Nextcloud metadata
+    var filename: String = ""
+    var typeIdentifier: String = ""
+    var childItemCount: NSNumber?
     var metadata = tableMetadata()
+    var isShared: Bool = false
+    var isDownloaded: Bool = true
+    var isMostRecentVersionDownloaded: Bool = true
+    var isUploaded: Bool = true
+    var versionIdentifier: Data?
+    var documentSize: NSNumber?
     
     init(metadata: tableMetadata, root: Bool) {
         
@@ -96,21 +72,15 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             }
         }
         
-        if (metadata.directory) {
-            
-        } else {
-            
+        // is Downloaded
+        if (!metadata.directory) {
             if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
-                
                 let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
                 let filePath = "\(directoryUser!)/\(metadata.fileID)"
-                
                 if fileManager.fileExists(atPath: filePath) {
                     self.isDownloaded = true
-                    self.isMostRecentVersionDownloaded = true;
                 } else {
                     self.isDownloaded = false
-                    self.isMostRecentVersionDownloaded = false;
                 }
                 
                 self.versionIdentifier = metadata.etag.data(using: .utf8)

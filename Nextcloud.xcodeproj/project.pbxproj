@@ -1403,6 +1403,10 @@
 		F7BFCCC11B68C21900548E76 /* CCManageLocation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCManageLocation.m; sourceTree = "<group>"; };
 		F7C0F46E1C8880540059EC54 /* ShareViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ShareViewController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		F7C0F46F1C8880540059EC54 /* ShareViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ShareViewController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		F7C474832084F3B200163193 /* PickerFileProvider.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PickerFileProvider.plist; sourceTree = "<group>"; };
+		F7C474842084F3CF00163193 /* iOSClient.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = iOSClient.plist; sourceTree = "<group>"; };
+		F7C474852084F3D900163193 /* Share.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Share.plist; sourceTree = "<group>"; };
+		F7C474862084F3E500163193 /* Picker.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Picker.plist; sourceTree = "<group>"; };
 		F7C5259F1E3B48B700FFE02C /* CCNotification.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CCNotification.swift; path = Notification/CCNotification.swift; sourceTree = "<group>"; };
 		F7C525A11E3B6DA800FFE02C /* CCNotification.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = CCNotification.storyboard; path = Notification/CCNotification.storyboard; sourceTree = "<group>"; };
 		F7C742C01E7BD01F00D9C973 /* iOSClient.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = iOSClient.entitlements; sourceTree = "<group>"; };
@@ -2778,6 +2782,10 @@
 				F7C742E61E7BD71A00D9C973 /* PickerFileProvider.entitlements */,
 				F7C742D01E7BD35B00D9C973 /* Share.entitlements */,
 				F7C742D41E7BD44400D9C973 /* Picker.entitlements */,
+				F7C474842084F3CF00163193 /* iOSClient.plist */,
+				F7C474832084F3B200163193 /* PickerFileProvider.plist */,
+				F7C474862084F3E500163193 /* Picker.plist */,
+				F7C474852084F3D900163193 /* Share.plist */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";

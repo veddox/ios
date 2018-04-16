@@ -15,14 +15,9 @@ import MobileCoreServices
 class FileProvider: NSFileProviderExtension {
     
     var fileManager = FileManager()
-    var identifierLookupTable: [NSFileProviderItemIdentifier:String]?
 
     override init() {
         super.init()
-        
-        if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() {
-            identifierLookupTable![NSFileProviderItemIdentifier.rootContainer] = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
-        }
     }
     
     override func item(for identifier: NSFileProviderItemIdentifier) throws -> NSFileProviderItem {
@@ -72,15 +67,13 @@ class FileProvider: NSFileProviderExtension {
         
         // in this implementation, all paths are structured as <base storage directory>/<item identifier>/<item file name>
         let manager = NSFileProviderManager.default
-        var url = manager.documentStorageURL.appendingPathComponent(identifier.rawValue, isDirectory: true)
+        let perItemDirectory = manager.documentStorageURL.appendingPathComponent(identifier.rawValue, isDirectory: true)
         
         if item.typeIdentifier == (kUTTypeFolder as String) {
-            url = url.appendingPathComponent(item.filename, isDirectory:true)
+            return perItemDirectory.appendingPathComponent(item.filename, isDirectory:true)
         } else {
-            url = url.appendingPathComponent(item.filename, isDirectory:false)
+            return perItemDirectory.appendingPathComponent(item.filename, isDirectory:false)
         }
-        
-        return url
     }
     
     override func persistentIdentifierForItem(at url: URL) -> NSFileProviderItemIdentifier? {
