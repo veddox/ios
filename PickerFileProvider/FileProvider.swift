@@ -15,9 +15,14 @@ import MobileCoreServices
 class FileProvider: NSFileProviderExtension {
     
     var fileManager = FileManager()
+    var identifierLookupTable: [NSFileProviderItemIdentifier:String]?
 
     override init() {
         super.init()
+        
+        if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() {
+            identifierLookupTable![NSFileProviderItemIdentifier.rootContainer] = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
+        }
     }
     
     override func item(for identifier: NSFileProviderItemIdentifier) throws -> NSFileProviderItem {
