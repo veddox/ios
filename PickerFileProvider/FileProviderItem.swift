@@ -20,7 +20,13 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var filename: String = ""                                       // The item's filename
     var typeIdentifier: String = ""                                 // The item's uniform type identifiers
     var capabilities: NSFileProviderItemCapabilities {              // The item's capabilities
-        return .allowsAll
+        
+        if self.metadata.directory {
+            return .allowsContentEnumerating
+        } else {
+            return .allowsReading
+
+        }
     }
     
     // Managing Content
@@ -88,7 +94,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                     }
                 }
             }
-        } 
+        }
         
         if (metadata.directory) {
             
@@ -98,6 +104,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                 
                 let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
                 let filePath = "\(directoryUser!)/\(metadata.fileID)"
+                
                 if fileManager.fileExists(atPath: filePath) {
                     self.isDownloaded = true
                     self.isMostRecentVersionDownloaded = true;

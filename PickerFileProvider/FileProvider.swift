@@ -67,13 +67,15 @@ class FileProvider: NSFileProviderExtension {
         
         // in this implementation, all paths are structured as <base storage directory>/<item identifier>/<item file name>
         let manager = NSFileProviderManager.default
-        let perItemDirectory = manager.documentStorageURL.appendingPathComponent(identifier.rawValue, isDirectory: true)
+        var url = manager.documentStorageURL.appendingPathComponent(identifier.rawValue, isDirectory: true)
         
         if item.typeIdentifier == (kUTTypeFolder as String) {
-            return perItemDirectory.appendingPathComponent(item.filename, isDirectory:true)
+            url = url.appendingPathComponent(item.filename, isDirectory:true)
         } else {
-            return perItemDirectory.appendingPathComponent(item.filename, isDirectory:false)
+            url = url.appendingPathComponent(item.filename, isDirectory:false)
         }
+        
+        return url
     }
     
     override func persistentIdentifierForItem(at url: URL) -> NSFileProviderItemIdentifier? {
