@@ -38,7 +38,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
 
     // Tracking Versions
     var versionIdentifier: Data?                                    // A data value used to determine when the item changes
-    var isMostRecentVersionDownloaded: Bool = true                  // A Boolean value that indicates whether the item is the most recent version downloaded from the server
+    var isMostRecentVersionDownloaded: Bool = false                 // A Boolean value that indicates whether the item is the most recent version downloaded from the server
 
     // Monitoring File Transfers
     var isUploading: Bool = false                                   // A Boolean value that indicates whether the item is currently uploading to your remote server
@@ -88,17 +88,22 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                     }
                 }
             }
-        }
+        } 
         
-        // is Downloaded
-        if (!metadata.directory) {
+        if (metadata.directory) {
+            
+        } else {
+            
             if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
+                
                 let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
                 let filePath = "\(directoryUser!)/\(metadata.fileID)"
                 if fileManager.fileExists(atPath: filePath) {
                     self.isDownloaded = true
+                    self.isMostRecentVersionDownloaded = true;
                 } else {
                     self.isDownloaded = false
+                    self.isMostRecentVersionDownloaded = false;
                 }
                 
                 self.versionIdentifier = metadata.etag.data(using: .utf8)
