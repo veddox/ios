@@ -2779,13 +2779,13 @@
 			isa = PBXGroup;
 			children = (
 				F7C742C01E7BD01F00D9C973 /* iOSClient.entitlements */,
-				F7C742E61E7BD71A00D9C973 /* PickerFileProvider.entitlements */,
 				F7C742D01E7BD35B00D9C973 /* Share.entitlements */,
+				F7C742E61E7BD71A00D9C973 /* PickerFileProvider.entitlements */,
 				F7C742D41E7BD44400D9C973 /* Picker.entitlements */,
 				F7C474842084F3CF00163193 /* iOSClient.plist */,
+				F7C474852084F3D900163193 /* Share.plist */,
 				F7C474832084F3B200163193 /* PickerFileProvider.plist */,
 				F7C474862084F3E500163193 /* Picker.plist */,
-				F7C474852084F3D900163193 /* Share.plist */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
