@@ -53,7 +53,7 @@ class FileProvider: NSFileProviderExtension {
                         createFileProviderItem(identifier.rawValue,fileName: metadata.fileNameView)
                     }
                 
-                    return  FileProviderItem(metadata: metadata, serverUrl: directory.serverUrl)
+                    return FileProviderItem(metadata: metadata, serverUrl: directory.serverUrl)
                 }
             }
         }
@@ -286,7 +286,7 @@ class FileProvider: NSFileProviderExtension {
                         
                     }, failure: { (message, errorCode) in
 
-                        perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
+                        perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
                         
                         counterProgress += 1
                         if (counterProgress == progress.totalUnitCount) {
@@ -350,7 +350,42 @@ class FileProvider: NSFileProviderExtension {
     
     override func createDirectory(withName directoryName: String, inParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
 
-        completionHandler(nil, nil)
+        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
+            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+            return
+        }
+        let account = activeAccount.account
+        
+        guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, parentItemIdentifier.rawValue)) else {
+            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+            return
+        }
+        
+        let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
+
+        ocNetworking?.createFolder(directoryName, serverUrl: directoryParent.serverUrl, account: activeAccount.account, success: { (fileID, date) in
+            
+            guard let newTableDirectory = NCManageDatabase.sharedInstance.addDirectory(encrypted: false, favorite: false, fileID: fileID, permissions: nil, serverUrl: directoryParent.serverUrl+"/"+directoryName) else {
+                completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+                return
+            }
+            
+            let metadata = tableMetadata()
+            metadata.account = account
+            metadata.directory = true
+            metadata.directoryID = newTableDirectory.directoryID
+            metadata.fileID = fileID!
+            metadata.fileName = directoryName
+            metadata.fileNameView = directoryName
+            metadata.typeFile = k_metadataTypeFile_directory
+                        
+            let item = FileProviderItem(metadata: metadata, serverUrl: directoryParent.serverUrl)
+            
+            completionHandler(item, nil)
+            
+        }, failure: { (message, errorCode) in
+            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
+        })
     }
     
     override func importDocument(at fileURL: URL, toParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
