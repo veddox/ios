@@ -25,9 +25,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         
         var items: [NSFileProviderItemProtocol] = []
         var serverUrl: String?
+        var metadatas: [tableMetadata]?
+        var numRecord = 0
 
         guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
-            observer.didEnumerate(items)
             observer.finishEnumerating(upTo: nil)
             return
         }
@@ -53,17 +54,24 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             }
             
             guard let serverUrl = serverUrl else {
-                observer.didEnumerate(items)
                 observer.finishEnumerating(upTo: nil)
                 return
+            }
+            
+            // select item from database
+            if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", account, serverUrl))  {
+                metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, directory.directoryID), sorted: "fileName", ascending: true)
             }
             
             // Calculate Page
             if (page != NSFileProviderPage.initialPageSortedByDate as NSFileProviderPage && page != NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
                 
                 let stringPrevPage = Int(String(data: page.rawValue, encoding: .utf8)!)
-                observer.didEnumerate(items)
-                observer.finishEnumerating(upTo: nil)
+                if (metadatas != nil) {
+                    observer.didEnumerate(items)
+                } else {
+                    observer.finishEnumerating(upTo: nil)
+                }
             }
             
             // Read Folder
@@ -72,7 +80,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                             
                 NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", account, directoryID!), clearDateReadDirectoryID: directoryID!)
                 
-                var numRecord = 0
                 for metadata in metadatas as! [tableMetadata] {
                     // Add record
                     if let metadata = NCManageDatabase.sharedInstance.addMetadata(metadata) {
@@ -94,22 +101,19 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             }, failure: { (message, errorCode) in
                 
                 // select item from database
-                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", account, serverUrl))  {
-                    if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, directory.directoryID), sorted: "fileName", ascending: true) {
-                        for metadata in metadatas {
-                            let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
-                            items.append(item)
-                        }
+                if (metadatas != nil) {
+                    for metadata in metadatas! {
+                        let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
+                        items.append(item)
                     }
                 }
-                
+               
                 observer.didEnumerate(items)
                 observer.finishEnumerating(upTo: nil)
             })
             
         } else {
             // < iOS 11
-            observer.didEnumerate(items)
             observer.finishEnumerating(upTo: nil)
         }
     }
