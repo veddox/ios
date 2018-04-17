@@ -13,15 +13,13 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     // TODO: implement an initializer to create an item from your extension's backing model
     // TODO: implement the accessors to return the values from your extension's backing model
 
-    var fileManager = FileManager()
-
     // Providing Required Properties
     var itemIdentifier: NSFileProviderItemIdentifier                // The item's persistent identifier
     var filename: String = ""                                       // The item's filename
     var typeIdentifier: String = ""                                 // The item's uniform type identifiers
     var capabilities: NSFileProviderItemCapabilities {              // The item's capabilities
         
-        if (self.metadata.directory) {
+        if (self.isDirectory) {
             return [ .allowsAddingSubItems, .allowsContentEnumerating, .allowsReading ]
         } else {
             return [ .allowsReading ]
@@ -54,10 +52,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var isDownloaded: Bool = true                                   // A Boolean value that indicates whether the item has been downloaded from your remote server
     var downloadingError: Error?                                    // An error that occurred while downloading the item
 
-    // Nextcloud metadata
-    var metadata = tableMetadata()
-    
-    // isRoot
+    var isDirectory = false;    
     var isRoot = false
     
     init(metadata: tableMetadata, serverUrl: String) {
@@ -80,7 +75,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
         self.documentSize = NSNumber(value: metadata.size)
         self.filename = metadata.fileNameView
         self.itemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
-        self.metadata = metadata
+        self.isDirectory = metadata.directory
 
         // parentItemIdentifier
         if #available(iOSApplicationExtension 11.0, *) {
@@ -130,8 +125,8 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             
             let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
             let filePath = "\(directoryUser!)/\(metadata.fileID)"
-                
-            if fileManager.fileExists(atPath: filePath) {
+            
+            if FileManager().fileExists(atPath: filePath) {
                 self.isDownloaded = true
                 self.isMostRecentVersionDownloaded = true;
             } else {
