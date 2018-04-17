@@ -54,7 +54,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             
             guard let serverUrl = serverUrl else {
                 observer.didEnumerate(items)
-                observer.finishEnumerating(upTo: nil)
+                observer.finishEnumerating(upTo: page)
                 return
             }
             
@@ -63,7 +63,8 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             ocNetworking?.readFolder(withServerUrl: serverUrl, depth: "1", account: activeAccount.account, success: { (metadatas, metadataFolder, directoryID) in
                             
                 NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", account, directoryID!), clearDateReadDirectoryID: directoryID!)
-                            
+                
+                var numRecord = 0
                 for metadata in metadatas as! [tableMetadata] {
                     // Add record
                     if let metadata = NCManageDatabase.sharedInstance.addMetadata(metadata) {
@@ -72,10 +73,21 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                             items.append(item)
                         }
                     }
+                    numRecord = numRecord + 1
+                    if (numRecord == 30) {
+                        break
+                    }
                 }
-                            
+                
+                let x = String(data: page.rawValue, encoding: .utf8)
+                
+                if (page == NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
+                    print("c")
+                }
+                
                 observer.didEnumerate(items)
-                observer.finishEnumerating(upTo: nil)
+                observer.finishEnumerating(upTo: page)
+                
                             
             }, failure: { (message, errorCode) in
                 
@@ -113,5 +125,8 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         
         print("enumerateChanges")
     }
+    
+    //func currentSyncAnchor(completionHandler: @escaping (NSFileProviderSyncAnchor?) -> Void) {
+    //}
 
 }
