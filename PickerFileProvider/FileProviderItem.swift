@@ -21,7 +21,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var typeIdentifier: String = ""                                 // The item's uniform type identifiers
     var capabilities: NSFileProviderItemCapabilities {              // The item's capabilities
         
-        if self.metadata.directory {
+        if (self.metadata.directory) {
             return [ .allowsAddingSubItems, .allowsContentEnumerating, .allowsReading ]
         } else {
             return [ .allowsReading ]
@@ -56,12 +56,21 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     // Nextcloud metadata
     var metadata = tableMetadata()
     
+    // isRoot
+    var isRoot = false
+    
     init(metadata: tableMetadata, serverUrl: String) {
         
+        // Account
         guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
             itemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
             parentItemIdentifier = NSFileProviderItemIdentifier("")
             return
+        }
+        
+        // isRoot ?
+        if (serverUrl == CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)) {
+            self.isRoot = true
         }
 
         self.contentModificationDate = metadata.date as Date
@@ -76,7 +85,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
             
             // NOT .rootContainer
-            if (serverUrl != CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)) {
+            if (!isRoot) {
                 if let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, metadata.directoryID))  {
                     if let metadataParent = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", metadata.account, directoryParent.fileID))  {
                         self.parentItemIdentifier = NSFileProviderItemIdentifier(metadataParent.fileID)
@@ -100,8 +109,8 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.childItemCount = 0
             var serverUrlForChild: String?
             
-            if (serverUrl == CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)) {
-                serverUrlForChild = serverUrl                                               // .rootContainer
+            if (self.isRoot) {
+                serverUrlForChild = serverUrl
             } else {
                 serverUrlForChild = serverUrl + "/" + metadata.fileName
             }

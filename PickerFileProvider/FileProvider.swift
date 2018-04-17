@@ -348,12 +348,16 @@ class FileProvider: NSFileProviderExtension {
         }
     }
     
+    override func createDirectory(withName directoryName: String, inParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
+
+        completionHandler(nil, nil)
+    }
+    
     override func importDocument(at fileURL: URL, toParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
         
         print("Import document")
         
         completionHandler(nil, nil)
-//
     }
 
 }
