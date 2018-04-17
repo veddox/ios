@@ -172,7 +172,7 @@
 #pragma mark ===== upload =====
 #pragma --------------------------------------------------------------------------------------------
 
-- (void)uploadFileNameServerUrl:(NSString *)fileNameServerUrl fileNameLocalPath:(NSString *)fileNameLocalPath success:(void (^)(void))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
+- (void)uploadFileNameServerUrl:(NSString *)fileNameServerUrl fileNameLocalPath:(NSString *)fileNameLocalPath success:(void(^)(NSString *fileID, NSString *etag, NSDate *date))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
 {
     OCCommunication *communication = [CCNetworking sharedNetworking].sharedOCCommunication;
     
@@ -182,7 +182,15 @@
     [communication uploadFileSession:fileNameLocalPath toDestiny:fileNameServerUrl onCommunication:communication progress:^(NSProgress *progress) {
         //float percent = roundf (progress.fractionCompleted * 100);
     } successRequest:^(NSURLResponse *response, NSString *redirectedServer) {
-        success();
+    
+        NSDictionary *fields = [(NSHTTPURLResponse*)response allHeaderFields];
+
+        NSString *fileID = [CCUtility removeForbiddenCharactersFileSystem:[fields objectForKey:@"OC-FileId"]];
+        NSString *etag = [CCUtility removeForbiddenCharactersFileSystem:[fields objectForKey:@"OC-ETag"]];
+        NSDate *date = [CCUtility dateEnUsPosixFromCloud:[fields objectForKey:@"Date"]];
+        
+        success(fileID, etag, date);
+        
     } failureRequest:^(NSURLResponse *response, NSString *redirectedServer, NSError *error) {
         
         NSString *message;

@@ -32,6 +32,7 @@ class FileProvider: NSFileProviderExtension {
                 if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl)) {
                     
                     let metadata = tableMetadata()
+                    
                     metadata.account = activeAccount.account
                     metadata.directory = true
                     metadata.directoryID = directory.directoryID
@@ -50,7 +51,9 @@ class FileProvider: NSFileProviderExtension {
                 if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID)) {
                     
                     if (!metadata.directory) {
-                        createFileProviderItem(identifier.rawValue,fileName: metadata.fileNameView)
+                        let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
+                        let fromFileNamePath = "\(directoryUser!)/\(identifier.rawValue)"
+                        createFileProviderItem(identifier.rawValue, fromFileNamePath: fromFileNamePath, fileName: metadata.fileNameView)
                     }
                 
                     return FileProviderItem(metadata: metadata, serverUrl: directory.serverUrl)
@@ -312,42 +315,6 @@ class FileProvider: NSFileProviderExtension {
         return progress
     }
     
-    func createFileProviderItem(_ fileProviderItem: String, fileName: String) {
-        
-        guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
-            return
-        }
-        
-        var storagePathUrl = groupURL.appendingPathComponent("File Provider Storage")
-        storagePathUrl = storagePathUrl.appendingPathComponent(fileProviderItem)
-        let storagePath = storagePathUrl.path
-        
-        if !FileManager.default.fileExists(atPath: storagePath) {
-            do {
-                try FileManager.default.createDirectory(atPath: storagePath, withIntermediateDirectories: false, attributes: nil)
-            } catch let error {
-                print("error creating filepath: \(error)")
-                return
-            }
-        }
-        
-        // ??? move o create 0 file .. is correct ???
-        if let activeAccount = NCManageDatabase.sharedInstance.getAccountActive()  {
-                
-            let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-            let atFilePath = "\(directoryUser!)/\(fileProviderItem)"
-            let toFilePath = "\(storagePath)/\(fileName)"
-                
-            try? fileManager.removeItem(atPath: toFilePath)
-
-            if fileManager.fileExists(atPath: atFilePath) {
-                try? fileManager.copyItem(atPath: atFilePath, toPath: toFilePath)
-            } else {
-                fileManager.createFile(atPath: toFilePath, contents: nil, attributes: nil)
-            }
-        }
-    }
-    
     override func createDirectory(withName directoryName: String, inParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
 
         guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
@@ -371,6 +338,7 @@ class FileProvider: NSFileProviderExtension {
             }
             
             let metadata = tableMetadata()
+            
             metadata.account = account
             metadata.directory = true
             metadata.directoryID = newTableDirectory.directoryID
@@ -394,7 +362,8 @@ class FileProvider: NSFileProviderExtension {
             completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
             return
         }
-        //let account = activeAccount.account
+        let account = activeAccount.account
+        let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
 
         guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, parentItemIdentifier.rawValue)) else {
             completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
@@ -404,15 +373,78 @@ class FileProvider: NSFileProviderExtension {
         let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
 
         let fileName = fileURL.lastPathComponent
-        //let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
         let fileNameLocalPath = fileURL.path
 
-        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath, success: {
+        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath, success: { (fileID, etag, date) in
             
-            completionHandler(nil, nil)
+            let metadata = tableMetadata()
+            
+            metadata.account = account
+            metadata.date = date! as NSDate
+            metadata.directory = false
+            metadata.directoryID = directoryParent.directoryID
+            metadata.etag = etag!
+            metadata.fileID = fileID!
+            metadata.fileName = fileName
+            metadata.fileNameView = fileName
+
+            do {
+                let attributes = try self.fileManager.attributesOfItem(atPath: fileURL.path)
+                metadata.size = attributes[FileAttributeKey.size] as! Double
+            } catch {
+            }
+            
+            CCUtility.insertTypeFileIconName(fileName, metadata: metadata)
+            
+            guard let metadataDB = NCManageDatabase.sharedInstance.addMetadata(metadata) else {
+                completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+                return
+            }
+
+            // Copy file
+            self.createFileProviderItem(metadata.fileID, fromFileNamePath: fileURL.path, fileName: fileName)
+            try? self.fileManager.copyItem(atPath: fileURL.path, toPath: directoryUser!+"/"+metadata.fileID)
+
+            // add item
+            let item = FileProviderItem(metadata: metadataDB, serverUrl: directoryParent.serverUrl)
+            
+            completionHandler(item, nil)
 
         }, failure: { (message, errorCode) in
             completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
         })
+    }
+    
+    // ----------------------------------------------------------------------------------------------------------------------------
+    
+    func createFileProviderItem(_ fileProviderItem: String, fromFileNamePath: String, fileName: String) {
+        
+        guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
+            return
+        }
+        
+        var storagePathUrl = groupURL.appendingPathComponent("File Provider Storage")
+        storagePathUrl = storagePathUrl.appendingPathComponent(fileProviderItem)
+        let storagePath = storagePathUrl.path
+        
+        if !FileManager.default.fileExists(atPath: storagePath) {
+            do {
+                try FileManager.default.createDirectory(atPath: storagePath, withIntermediateDirectories: false, attributes: nil)
+            } catch let error {
+                print("error creating filepath: \(error)")
+                return
+            }
+        }
+        
+        // ??? move o create 0 file .. is correct ???
+        let toFilePath = "\(storagePath)/\(fileName)"
+            
+        try? fileManager.removeItem(atPath: toFilePath)
+            
+        if fileManager.fileExists(atPath: fromFileNamePath) {
+            try? fileManager.copyItem(atPath: fromFileNamePath, toPath: toFilePath)
+        } else {
+            fileManager.createFile(atPath: toFilePath, contents: nil, attributes: nil)
+        }
     }
 }

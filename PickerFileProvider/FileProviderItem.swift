@@ -49,6 +49,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var isUploading: Bool = false                                   // A Boolean value that indicates whether the item is currently uploading to your remote server
     var isUploaded: Bool = true                                     // A Boolean value that indicates whether the item has been uploaded to your remote server
     var uploadingError: Error?                                      // An error that occurred while uploading to your remote server
+    
     var isDownloading: Bool = false                                 // A Boolean value that indicates whether the item is currently downloading from your remote server
     var isDownloaded: Bool = true                                   // A Boolean value that indicates whether the item has been downloaded from your remote server
     var downloadingError: Error?                                    // An error that occurred while downloading the item
@@ -75,6 +76,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
 
         self.childItemCount = 0
         self.contentModificationDate = metadata.date as Date
+        self.creationDate = metadata.date as Date
         self.documentSize = NSNumber(value: metadata.size)
         self.filename = metadata.fileNameView
         self.itemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
