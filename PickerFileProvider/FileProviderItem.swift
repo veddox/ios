@@ -75,6 +75,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             
             self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
             
+            // NOT .rootContainer
             if (serverUrl != CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)) {
                 if let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, metadata.directoryID))  {
                     if let metadataParent = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", metadata.account, directoryParent.fileID))  {
@@ -92,7 +93,6 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.typeIdentifier = fileType 
         }
         self.versionIdentifier = metadata.etag.data(using: .utf8)
-
         
         // Calculate number of children
         if (metadata.directory) {
@@ -111,7 +111,6 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                     self.childItemCount = metadatas.count as NSNumber
                 }
             }
-            
             
         } else {
             
