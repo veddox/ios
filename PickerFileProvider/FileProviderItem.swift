@@ -133,8 +133,6 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                 self.isDownloaded = false
                 self.isMostRecentVersionDownloaded = false;
             }
-                
-        }
-        
+        }        
     }
 }
