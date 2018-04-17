@@ -79,10 +79,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     }
                 }
                 
-                let x = String(data: page.rawValue, encoding: .utf8)
-                
-                if (page == NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
-                    print("c")
+                if (page == NSFileProviderPage.initialPageSortedByDate as NSFileProviderPage || page == NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
+                    print("INIT")
+                } else {
+                    
                 }
                 
                 observer.didEnumerate(items)
