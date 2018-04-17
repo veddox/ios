@@ -73,6 +73,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.isRoot = true
         }
 
+        self.childItemCount = 0
         self.contentModificationDate = metadata.date as Date
         self.documentSize = NSNumber(value: metadata.size)
         self.filename = metadata.fileNameView
@@ -106,7 +107,6 @@ class FileProviderItem: NSObject, NSFileProviderItem {
         // Calculate number of children
         if (metadata.directory) {
     
-            self.childItemCount = 0
             var serverUrlForChild: String?
             
             if (self.isRoot) {
@@ -120,8 +120,10 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                     self.childItemCount = metadatas.count as NSNumber
                 }
             }
-            
-        } else {
+        }
+        
+        // Verify file exists on cache
+        if (!metadata.directory) {
             
             let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
             let filePath = "\(directoryUser!)/\(metadata.fileID)"
@@ -133,6 +135,6 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                 self.isDownloaded = false
                 self.isMostRecentVersionDownloaded = false;
             }
-        }        
+        }
     }
 }
