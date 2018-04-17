@@ -31,10 +31,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             observer.finishEnumerating(upTo: nil)
             return
         }
-        
+        let account = activeAccount.account
+
         if #available(iOSApplicationExtension 11.0, *) {
             
-            let account = activeAccount.account
             let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
             
             // Select ServerUrl
@@ -54,8 +54,16 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             
             guard let serverUrl = serverUrl else {
                 observer.didEnumerate(items)
-                observer.finishEnumerating(upTo: page)
+                observer.finishEnumerating(upTo: nil)
                 return
+            }
+            
+            // Calculate Page
+            if (page != NSFileProviderPage.initialPageSortedByDate as NSFileProviderPage && page != NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
+                
+                let stringPrevPage = Int(String(data: page.rawValue, encoding: .utf8)!)
+                observer.didEnumerate(items)
+                observer.finishEnumerating(upTo: nil)
             }
             
             // Read Folder
@@ -69,26 +77,20 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     // Add record
                     if let metadata = NCManageDatabase.sharedInstance.addMetadata(metadata) {
                         if metadata.e2eEncrypted == false {
-                            let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
-                            items.append(item)
+                            if numRecord <= 10 {
+                                let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
+                                items.append(item)
+                                numRecord += 1
+                            }
                         }
                     }
-                    numRecord = numRecord + 1
-                    if (numRecord == 30) {
-                        break
-                    }
                 }
                 
-                if (page == NSFileProviderPage.initialPageSortedByDate as NSFileProviderPage || page == NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
-                    print("INIT")
-                } else {
-                    
-                }
+                let providerPage = NSFileProviderPage("1".data(using: .utf8)!)
                 
                 observer.didEnumerate(items)
-                observer.finishEnumerating(upTo: page)
+                observer.finishEnumerating(upTo: providerPage)
                 
-                            
             }, failure: { (message, errorCode) in
                 
                 // select item from database
