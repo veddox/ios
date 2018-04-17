@@ -35,23 +35,26 @@ class FileProvider: NSFileProviderExtension {
                     metadata.account = activeAccount.account
                     metadata.directory = true
                     metadata.directoryID = directory.directoryID
-                    metadata.fileID = directory.fileID
+                    metadata.fileID = identifier.rawValue
                     metadata.fileName = "."
                     metadata.fileNameView = "."
                     metadata.typeFile = k_metadataTypeFile_directory
                     
-                    return FileProviderItem(metadata: metadata, root: true)
+                    return FileProviderItem(metadata: metadata, serverUrl: serverUrl)
                 }
             }
+            
         } else {
         
             if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, identifier.rawValue))  {
+                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID)) {
+                    
+                    if (!metadata.directory) {
+                        createFileProviderItem(identifier.rawValue,fileName: metadata.fileNameView)
+                    }
                 
-                if (!metadata.directory) {
-                    createFileProviderItem(identifier.rawValue,fileName: metadata.fileNameView)
+                    return  FileProviderItem(metadata: metadata, serverUrl: directory.serverUrl)
                 }
-                
-                return FileProviderItem(metadata: metadata, root: false)
             }
         }
         // TODO: implement the actual lookup
@@ -67,13 +70,15 @@ class FileProvider: NSFileProviderExtension {
         
         // in this implementation, all paths are structured as <base storage directory>/<item identifier>/<item file name>
         let manager = NSFileProviderManager.default
-        let perItemDirectory = manager.documentStorageURL.appendingPathComponent(identifier.rawValue, isDirectory: true)
+        var url = manager.documentStorageURL.appendingPathComponent(identifier.rawValue, isDirectory: true)
         
         if item.typeIdentifier == (kUTTypeFolder as String) {
-            return perItemDirectory.appendingPathComponent(item.filename, isDirectory:true)
+            url = url.appendingPathComponent(item.filename, isDirectory:true)
         } else {
-            return perItemDirectory.appendingPathComponent(item.filename, isDirectory:false)
+            url = url.appendingPathComponent(item.filename, isDirectory:false)
         }
+        
+        return url
     }
     
     override func persistentIdentifierForItem(at url: URL) -> NSFileProviderItemIdentifier? {
@@ -235,30 +240,9 @@ class FileProvider: NSFileProviderExtension {
     
     override func enumerator(for containerItemIdentifier: NSFileProviderItemIdentifier) throws -> NSFileProviderEnumerator {
         
-        var maybeEnumerator: NSFileProviderEnumerator? = nil
+        let maybeEnumerator = FileProviderEnumerator(enumeratedItemIdentifier: containerItemIdentifier)
         
-        if (containerItemIdentifier == NSFileProviderItemIdentifier.rootContainer) {
-            
-            maybeEnumerator = FileProviderEnumerator(enumeratedItemIdentifier: containerItemIdentifier)
-            
-        } else if (containerItemIdentifier == NSFileProviderItemIdentifier.workingSet) {
-            
-            maybeEnumerator = FileProviderEnumerator(enumeratedItemIdentifier: containerItemIdentifier)
-            
-        } else {
-            
-            // TODO: determine if the item is a directory or a file
-            // - for a directory, instantiate an enumerator of its subitems
-            // - for a file, instantiate an enumerator that observes changes to the file
-            
-            print("\(containerItemIdentifier.rawValue)");
-            
-            maybeEnumerator = FileProviderEnumerator(enumeratedItemIdentifier: containerItemIdentifier)
-        }
-        guard let enumerator = maybeEnumerator else {
-            throw NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:])
-        }
-        return enumerator
+        return maybeEnumerator
     }
     
     override func fetchThumbnails(for itemIdentifiers: [NSFileProviderItemIdentifier], requestedSize size: CGSize, perThumbnailCompletionHandler: @escaping (NSFileProviderItemIdentifier, Data?, Error?) -> Void, completionHandler: @escaping (Error?) -> Void) -> Progress {

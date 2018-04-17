@@ -68,7 +68,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     // Add record
                     if let metadata = NCManageDatabase.sharedInstance.addMetadata(metadata) {
                         if metadata.e2eEncrypted == false {
-                            let item = FileProviderItem(metadata: metadata, root: false)
+                            let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
                             items.append(item)
                         }
                     }
@@ -82,7 +82,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", account, serverUrl))  {
                     if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, directory.directoryID), sorted: "fileName", ascending: true) {
                         for metadata in metadatas {
-                            let item = FileProviderItem(metadata: metadata, root: false)
+                            let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
                             items.append(item)
                         }
                     }
