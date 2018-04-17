@@ -52,7 +52,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var isDownloaded: Bool = true                                   // A Boolean value that indicates whether the item has been downloaded from your remote server
     var downloadingError: Error?                                    // An error that occurred while downloading the item
 
-    var isDirectory = false;    
+    var isDirectory = false;
     var isRoot = false
     
     init(metadata: tableMetadata, serverUrl: String) {
@@ -69,7 +69,6 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.isRoot = true
         }
 
-        self.childItemCount = 0
         self.contentModificationDate = metadata.date as Date
         self.creationDate = metadata.date as Date
         self.documentSize = NSNumber(value: metadata.size)
@@ -101,24 +100,6 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.typeIdentifier = fileType 
         }
         self.versionIdentifier = metadata.etag.data(using: .utf8)
-        
-        // Calculate number of children
-        if (metadata.directory) {
-    
-            var serverUrlForChild: String?
-            
-            if (self.isRoot) {
-                serverUrlForChild = serverUrl
-            } else {
-                serverUrlForChild = serverUrl + "/" + metadata.fileName
-            }
-            
-            if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", metadata.account, serverUrlForChild!)) {
-                if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, directory.directoryID), sorted: "fileName", ascending: true) {
-                    self.childItemCount = metadatas.count as NSNumber
-                }
-            }
-        }
         
         // Verify file exists on cache
         if (!metadata.directory) {
