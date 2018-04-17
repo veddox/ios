@@ -172,6 +172,40 @@
 #pragma mark ===== upload =====
 #pragma --------------------------------------------------------------------------------------------
 
+- (void)uploadFileNameServerUrl:(NSString *)fileNameServerUrl fileNameLocalPath:(NSString *)fileNameLocalPath success:(void (^)(void))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
+{
+    OCCommunication *communication = [CCNetworking sharedNetworking].sharedOCCommunication;
+    
+    [communication setCredentialsWithUser:_activeUser andUserID:_activeUserID andPassword:_activePassword];
+    [communication setUserAgent:[CCUtility getUserAgent]];
+    
+    [communication uploadFileSession:fileNameLocalPath toDestiny:fileNameServerUrl onCommunication:communication progress:^(NSProgress *progress) {
+        //float percent = roundf (progress.fractionCompleted * 100);
+    } successRequest:^(NSURLResponse *response, NSString *redirectedServer) {
+        success();
+    } failureRequest:^(NSURLResponse *response, NSString *redirectedServer, NSError *error) {
+        
+        NSString *message;
+        NSInteger errorCode;
+        
+        NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse*)response;
+        errorCode = httpResponse.statusCode;
+        
+        if (errorCode == 0 || (errorCode >= 200 && errorCode < 300))
+            errorCode = error.code;
+        
+        // Error
+        if (errorCode == 503)
+            message = NSLocalizedStringFromTable(@"_server_error_retry_", @"Error", nil);
+        else
+            message = [error.userInfo valueForKey:@"NSLocalizedDescription"];
+        
+        failure(message, errorCode);
+        
+    } failureBeforeRequest:^(NSError *error) {
+        failure(@"", error.code);
+    }];
+}
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ===== downloadThumbnail =====
 #pragma --------------------------------------------------------------------------------------------

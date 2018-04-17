@@ -390,7 +390,27 @@ class FileProvider: NSFileProviderExtension {
     
     override func importDocument(at fileURL: URL, toParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
         
-        print("Import document")
+        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
+            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+            return
+        }
+        //let account = activeAccount.account
+
+        guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, parentItemIdentifier.rawValue)) else {
+            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+            return
+        }
+        
+        let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
+
+        let fileName = fileURL.lastPathComponent
+        
+        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileURL.absoluteString, success: {
+            
+        }, failure: { (message, errorCode) in
+            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
+
+        })
         
         completionHandler(nil, nil)
     }
