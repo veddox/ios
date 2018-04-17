@@ -91,6 +91,11 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 observer.didEnumerate(items)
                 observer.finishEnumerating(upTo: nil)
             })
+            
+        } else {
+            // < iOS 11
+            observer.didEnumerate(items)
+            observer.finishEnumerating(upTo: nil)
         }
     }
     
