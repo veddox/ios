@@ -241,7 +241,17 @@
         [downloadSessionManager.operationQueue setMaxConcurrentOperationCount:1];
         downloadSessionManager.responseSerializer = [AFHTTPResponseSerializer serializer];
        
-        sharedOCCommunication = [[OCCommunication alloc] initWithUploadSessionManager:nil andDownloadSessionManager:downloadSessionManager andNetworkSessionManager:networkSessionManager];
+        NSURLSessionConfiguration *configurationUpload = [NSURLSessionConfiguration defaultSessionConfiguration];
+        configurationDownload.allowsCellularAccess = YES;
+        configurationDownload.discretionary = NO;
+        configurationDownload.HTTPMaximumConnectionsPerHost = 1;
+        configurationDownload.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+        
+        OCURLSessionManager *uploadSessionManager = [[OCURLSessionManager alloc] initWithSessionConfiguration:configurationUpload];
+        [uploadSessionManager.operationQueue setMaxConcurrentOperationCount:1];
+        uploadSessionManager.responseSerializer = [AFHTTPResponseSerializer serializer];
+        
+        sharedOCCommunication = [[OCCommunication alloc] initWithUploadSessionManager:uploadSessionManager andDownloadSessionManager:downloadSessionManager andNetworkSessionManager:networkSessionManager];
     }
     
     return sharedOCCommunication;

@@ -404,15 +404,15 @@ class FileProvider: NSFileProviderExtension {
         let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
 
         let fileName = fileURL.lastPathComponent
-        
-        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileURL.absoluteString, success: {
+        //let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
+        let fileNameLocalPath = fileURL.path
+
+        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath, success: {
             
+            completionHandler(nil, nil)
+
         }, failure: { (message, errorCode) in
             completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
-
         })
-        
-        completionHandler(nil, nil)
     }
-
 }
