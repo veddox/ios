@@ -22,10 +22,9 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var capabilities: NSFileProviderItemCapabilities {              // The item's capabilities
         
         if self.metadata.directory {
-            return .allowsContentEnumerating
+            return [ .allowsAddingSubItems, .allowsContentEnumerating, .allowsReading ]
         } else {
-            return .allowsReading
-
+            return [ .allowsReading ]
         }
     }
     
@@ -65,6 +64,13 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             return
         }
 
+        self.contentModificationDate = metadata.date as Date
+        self.documentSize = NSNumber(value: metadata.size)
+        self.filename = metadata.fileNameView
+        self.itemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
+        self.metadata = metadata
+
+        // parentItemIdentifier
         if #available(iOSApplicationExtension 11.0, *) {
             
             self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
@@ -81,13 +87,12 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.parentItemIdentifier = NSFileProviderItemIdentifier("")
         }
         
-        self.metadata = metadata
-        self.filename = metadata.fileNameView
-        itemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
-        
+        // typeIdentifier
         if let fileType = CCUtility.insertTypeFileIconName(metadata.fileNameView, metadata: metadata) {
             self.typeIdentifier = fileType 
         }
+        self.versionIdentifier = metadata.etag.data(using: .utf8)
+
         
         // Calculate number of children
         if (metadata.directory) {
@@ -107,6 +112,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                 }
             }
             
+            
         } else {
             
             let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
@@ -120,8 +126,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
                 self.isMostRecentVersionDownloaded = false;
             }
                 
-            self.versionIdentifier = metadata.etag.data(using: .utf8)
-            self.documentSize = NSNumber(value: metadata.size)
         }
+        
     }
 }

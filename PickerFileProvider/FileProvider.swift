@@ -62,6 +62,7 @@ class FileProvider: NSFileProviderExtension {
     }
     
     override func urlForItem(withPersistentIdentifier identifier: NSFileProviderItemIdentifier) -> URL? {
+        
         // resolve the given identifier to a file on disk
                 
         guard let item = try? item(for: identifier) else {
