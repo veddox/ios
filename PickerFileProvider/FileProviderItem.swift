@@ -93,9 +93,15 @@ class FileProviderItem: NSObject, NSFileProviderItem {
         if (metadata.directory) {
     
             self.childItemCount = 0
+            var serverUrlForChild: String?
             
-            let serverUrlForChild = serverUrl + "/" + metadata.fileName
-            if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", metadata.account, serverUrlForChild)) {
+            if (serverUrl == CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)) {
+                serverUrlForChild = serverUrl                                               // .rootContainer
+            } else {
+                serverUrlForChild = serverUrl + "/" + metadata.fileName
+            }
+            
+            if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", metadata.account, serverUrlForChild!)) {
                 if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, directory.directoryID), sorted: "fileName", ascending: true) {
                     self.childItemCount = metadatas.count as NSNumber
                 }
