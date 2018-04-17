@@ -95,6 +95,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             }
             
         } else {
+            // < iOS 11
             self.parentItemIdentifier = NSFileProviderItemIdentifier("")
         }
         
