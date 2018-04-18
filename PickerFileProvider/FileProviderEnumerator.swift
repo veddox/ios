@@ -27,9 +27,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         var items: [NSFileProviderItemProtocol] = []
         var serverUrl: String?
         var metadatas: [tableMetadata]?
-        var numRecord = 0
-        var currentPage = Int(String(data: page.rawValue, encoding: .utf8)!)!
-
 
         guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
             observer.finishEnumerating(upTo: nil)
@@ -39,11 +36,9 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
         if #available(iOSApplicationExtension 11.0, *) {
             
-            
             // Select ServerUrl
             if (enumeratedItemIdentifier == .rootContainer) {
                 serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
-                    
             } else {
                 if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, enumeratedItemIdentifier.rawValue))  {
                     if let directorySource = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID))  {
@@ -51,7 +46,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     }
                 }
             }
-            
             guard let serverUrl = serverUrl else {
                 observer.finishEnumerating(upTo: nil)
                 return
@@ -64,31 +58,41 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             
             // Calculate current page
             if (page != NSFileProviderPage.initialPageSortedByDate as NSFileProviderPage && page != NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
+                
+                var currentPage = Int(String(data: page.rawValue, encoding: .utf8)!)!
+                
+                if (metadatas != nil) {
+                    items = self.selectItems(page: page, account: account, serverUrl: serverUrl, metadatas: metadatas!)
+                    observer.didEnumerate(items)
+                }
+                
+                if (items.count == self.recordForPage) {
+                    currentPage += 1
+                    let providerPage = NSFileProviderPage("\(currentPage)".data(using: .utf8)!)
+                    observer.finishEnumerating(upTo: providerPage)
+                } else {
+                    observer.finishEnumerating(upTo: nil)
+                }
             }
             
             // Read Folder
             let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
             ocNetworking?.readFolder(withServerUrl: serverUrl, depth: "1", account: activeAccount.account, success: { (metadatas, metadataFolder, directoryID) in
-                            
-                NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", account, directoryID!), clearDateReadDirectoryID: directoryID!)
                 
-                for metadata in metadatas as! [tableMetadata] {
-                    // Add record
-                    if let metadata = NCManageDatabase.sharedInstance.addMetadata(metadata) {
-                        if metadata.e2eEncrypted == false {
-                            if numRecord <= 10 {
-                                let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
-                                items.append(item)
-                                numRecord += 1
-                            }
-                        }
-                    }
+                if (metadatas != nil) {
+                    NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", account, directoryID!), clearDateReadDirectoryID: directoryID!)
+                    _ = NCManageDatabase.sharedInstance.addMetadatas(metadatas as! [tableMetadata], serverUrl: serverUrl)
+                    
+                    items = self.selectItems(page: page, account: account, serverUrl: serverUrl, metadatas: metadatas as! [tableMetadata])
+                    observer.didEnumerate(items)
                 }
                 
-                let providerPage = NSFileProviderPage("1".data(using: .utf8)!)
-                
-                observer.didEnumerate(items)
-                observer.finishEnumerating(upTo: providerPage)
+                if (items.count == self.recordForPage) {
+                    let providerPage = NSFileProviderPage("1".data(using: .utf8)!)
+                    observer.finishEnumerating(upTo: providerPage)
+                } else {
+                    observer.finishEnumerating(upTo: nil)
+                }
                 
             }, failure: { (message, errorCode) in
                 
@@ -99,8 +103,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 }
                 
                 if (items.count == self.recordForPage) {
-                    currentPage += 1
-                    let providerPage = NSFileProviderPage("\(currentPage)".data(using: .utf8)!)
+                    let providerPage = NSFileProviderPage("1".data(using: .utf8)!)
                     observer.finishEnumerating(upTo: providerPage)
                 } else {
                     observer.finishEnumerating(upTo: nil)
