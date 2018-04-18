@@ -178,11 +178,11 @@ class FileProvider: NSFileProviderExtension {
             }
 
             ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser)/\(itemIdentifier)", success: {
-                    
+                
                 NCManageDatabase.sharedInstance.addLocalFile(metadata: metadata)
-                //if (metadata.typeFile == k_metadataTypeFile_image) {
-                //    CCExifGeo.sharedInstance().setExifLocalTableEtag(metadata, directoryUser: directoryUser, activeAccount: account)
-                //}
+                if (metadata.typeFile == k_metadataTypeFile_image) {
+                    CCExifGeo.sharedInstance().setExifLocalTableEtag(metadata, directoryUser: directoryUser, activeAccount: account)
+                }
                 completionHandler(nil)
                     
             }, failure: { (message, errorCode) in
