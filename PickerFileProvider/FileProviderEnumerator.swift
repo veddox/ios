@@ -59,16 +59,16 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             // Calculate current page
             if (page != NSFileProviderPage.initialPageSortedByDate as NSFileProviderPage && page != NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
                 
-                var currentPage = Int(String(data: page.rawValue, encoding: .utf8)!)!
+                var numPage = Int(String(data: page.rawValue, encoding: .utf8)!)!
                 
                 if (metadatas != nil) {
-                    items = self.selectItems(page: page, account: account, serverUrl: serverUrl, metadatas: metadatas!)
+                    items = self.selectItems(numPage: numPage, account: account, serverUrl: serverUrl, metadatas: metadatas!)
                     observer.didEnumerate(items)
                 }
                 
                 if (items.count == self.recordForPage) {
-                    currentPage += 1
-                    let providerPage = NSFileProviderPage("\(currentPage)".data(using: .utf8)!)
+                    numPage += 1
+                    let providerPage = NSFileProviderPage("\(numPage)".data(using: .utf8)!)
                     observer.finishEnumerating(upTo: providerPage)
                 } else {
                     observer.finishEnumerating(upTo: nil)
@@ -83,7 +83,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", account, directoryID!), clearDateReadDirectoryID: directoryID!)
                     _ = NCManageDatabase.sharedInstance.addMetadatas(metadatas as! [tableMetadata], serverUrl: serverUrl)
                     
-                    items = self.selectItems(page: page, account: account, serverUrl: serverUrl, metadatas: metadatas as! [tableMetadata])
+                    items = self.selectItems(numPage: 0, account: account, serverUrl: serverUrl, metadatas: metadatas as! [tableMetadata])
                     observer.didEnumerate(items)
                 }
                 
@@ -98,7 +98,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 
                 // select item from database
                 if (metadatas != nil) {
-                    items = self.selectItems(page: page, account: account, serverUrl: serverUrl, metadatas: metadatas!)
+                    items = self.selectItems(numPage: 0, account: account, serverUrl: serverUrl, metadatas: metadatas!)
                     observer.didEnumerate(items)
                 }
                 
@@ -116,10 +116,9 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         }
     }
     
-    func selectItems(page: NSFileProviderPage, account: String, serverUrl: String, metadatas: [tableMetadata]) -> [NSFileProviderItemProtocol] {
+    func selectItems(numPage: Int, account: String, serverUrl: String, metadatas: [tableMetadata]) -> [NSFileProviderItemProtocol] {
         
         var items: [NSFileProviderItemProtocol] = []
-        let numPage = Int(String(data: page.rawValue, encoding: .utf8)!)!
         let start = numPage * self.recordForPage + 1
         let stop = start + (self.recordForPage - 1)
         var counter = 0
