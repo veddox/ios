@@ -10,6 +10,12 @@ import FileProvider
 import UIKit
 import MobileCoreServices
 
+var ocNetworking: OCnetworking?
+var account = ""
+var accountUrl = ""
+var homeServerUrl = ""
+var directoryUser = ""
+
 @available(iOSApplicationExtension 11.0, *)
 
 class FileProvider: NSFileProviderExtension {
@@ -17,42 +23,47 @@ class FileProvider: NSFileProviderExtension {
     var fileManager = FileManager()
 
     override init() {
+        
         super.init()
+        
+        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
+            return
+        }
+        
+        account = activeAccount.account
+        accountUrl = activeAccount.url
+        homeServerUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
+        directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
+
+        ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
     }
     
     override func item(for identifier: NSFileProviderItemIdentifier) throws -> NSFileProviderItem {
         
-        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
-            throw NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:])
-        }
-        
         if identifier == .rootContainer {
             
-            if let serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)  {
-                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", activeAccount.account, serverUrl)) {
+            if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", account, homeServerUrl)) {
                     
-                    let metadata = tableMetadata()
+                let metadata = tableMetadata()
                     
-                    metadata.account = activeAccount.account
-                    metadata.directory = true
-                    metadata.directoryID = directory.directoryID
-                    metadata.fileID = identifier.rawValue
-                    metadata.fileName = "."
-                    metadata.fileNameView = "."
-                    metadata.typeFile = k_metadataTypeFile_directory
+                metadata.account = account
+                metadata.directory = true
+                metadata.directoryID = directory.directoryID
+                metadata.fileID = identifier.rawValue
+                metadata.fileName = "."
+                metadata.fileNameView = "."
+                metadata.typeFile = k_metadataTypeFile_directory
                     
-                    return FileProviderItem(metadata: metadata, serverUrl: serverUrl)
-                }
+                return FileProviderItem(metadata: metadata, serverUrl: homeServerUrl)
             }
             
         } else {
         
-            if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, identifier.rawValue))  {
-                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID)) {
+            if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, identifier.rawValue))  {
+                if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, metadata.directoryID)) {
                     
                     if (!metadata.directory) {
-                        let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-                        let fromFileNamePath = "\(directoryUser!)/\(identifier.rawValue)"
+                        let fromFileNamePath = "\(directoryUser)/\(identifier.rawValue)"
                         createFileProviderItem(identifier.rawValue, fromFileNamePath: fromFileNamePath, fileName: metadata.fileNameView)
                     }
                 
@@ -140,61 +151,50 @@ class FileProvider: NSFileProviderExtension {
          }
          */
         
+        var fileSize : UInt64 = 0
+        
         do {
             let attr = try fileManager.attributesOfItem(atPath: url.path)
-            let fileSize = attr[FileAttributeKey.size] as! UInt64
-            
-            // Do not exists
-            if fileSize == 0 {
-                
-                guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
-                    completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
-                    return
-                }
-                
-                let account = activeAccount.account
-                let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
-
-                let pathComponents = url.pathComponents
-                let itemIdentifier = pathComponents[pathComponents.count - 2]
-            
-                guard let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, itemIdentifier)) else {
-                    completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
-                    return
-                }
-                
-                guard let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID)) else {
-                    completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
-                    return
-                }
-
-                let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-
-                ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser!)/\(itemIdentifier)", success: {
-                    
-                    NCManageDatabase.sharedInstance.addLocalFile(metadata: metadata)
-                    if (metadata.typeFile == k_metadataTypeFile_image) {
-                        CCExifGeo.sharedInstance().setExifLocalTableEtag(metadata, directoryUser: directoryUser, activeAccount: account)
-                    }
-                    
-                    completionHandler(nil)
-                    
-                }, failure: { (message, errorCode) in
-                    completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
-                })
-                
-            } else {
-                
-                // Exists
-                completionHandler(nil)
-            }
-            
+            fileSize = attr[FileAttributeKey.size] as! UInt64
         } catch {
             print("Error: \(error)")
             completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
         }
+            
+        // Do not exists
+        if fileSize == 0 {
+                
+            let pathComponents = url.pathComponents
+            let itemIdentifier = pathComponents[pathComponents.count - 2]
+            
+            guard let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, itemIdentifier)) else {
+                completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                return
+            }
+                
+            guard let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, metadata.directoryID)) else {
+                completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                return
+            }
+
+            ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser)/\(itemIdentifier)", success: {
+                    
+                NCManageDatabase.sharedInstance.addLocalFile(metadata: metadata)
+                //if (metadata.typeFile == k_metadataTypeFile_image) {
+                //    CCExifGeo.sharedInstance().setExifLocalTableEtag(metadata, directoryUser: directoryUser, activeAccount: account)
+                //}
+                completionHandler(nil)
+                    
+            }, failure: { (message, errorCode) in
+                completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+            })
+                
+        } else {
+                
+            // Exists
+            completionHandler(nil)
+        }
     }
-    
     
     override func itemChanged(at url: URL) {
         // Called at some point after the file has changed; the provider may then trigger an upload
@@ -254,28 +254,20 @@ class FileProvider: NSFileProviderExtension {
         let progress = Progress(totalUnitCount: Int64(itemIdentifiers.count))
         var counterProgress: Int64 = 0
         
-        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
-            completionHandler(nil)
-            return progress
-        }
-        
-        let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-        let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
-
         for item in itemIdentifiers {
             
-            if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, item.rawValue))  {
+            if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, item.rawValue))  {
                 
                 if (metadata.typeFile == k_metadataTypeFile_image || metadata.typeFile == k_metadataTypeFile_video) {
                     
                     let serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID)
-                    let fileName = CCUtility.returnFileNamePath(fromFileName: metadata.fileName, serverUrl: serverUrl, activeUrl: activeAccount.url)
+                    let fileName = CCUtility.returnFileNamePath(fromFileName: metadata.fileName, serverUrl: serverUrl, activeUrl: accountUrl)
                     let fileNameLocal = metadata.fileID
 
                     ocNetworking?.downloadThumbnail(withDimOfThumbnail: "m", fileName: fileName, fileNameLocal: fileNameLocal, success: {
 
                         do {
-                            let url = URL.init(fileURLWithPath: "\(directoryUser!)/\(item.rawValue).ico")
+                            let url = URL.init(fileURLWithPath: "\(directoryUser)/\(item.rawValue).ico")
                             let data = try Data.init(contentsOf: url)
                             perThumbnailCompletionHandler(item, data, nil)
                         } catch {
@@ -317,20 +309,12 @@ class FileProvider: NSFileProviderExtension {
     
     override func createDirectory(withName directoryName: String, inParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
 
-        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
-            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
-            return
-        }
-        let account = activeAccount.account
-        
-        guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, parentItemIdentifier.rawValue)) else {
+        guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, parentItemIdentifier.rawValue)) else {
             completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
             return
         }
         
-        let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
-
-        ocNetworking?.createFolder(directoryName, serverUrl: directoryParent.serverUrl, account: activeAccount.account, success: { (fileID, date) in
+        ocNetworking?.createFolder(directoryName, serverUrl: directoryParent.serverUrl, account: account, success: { (fileID, date) in
             
             guard let newTableDirectory = NCManageDatabase.sharedInstance.addDirectory(encrypted: false, favorite: false, fileID: fileID, permissions: nil, serverUrl: directoryParent.serverUrl+"/"+directoryName) else {
                 completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
@@ -358,20 +342,11 @@ class FileProvider: NSFileProviderExtension {
     
     override func importDocument(at fileURL: URL, toParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
         
-        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
-            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
-            return
-        }
-        let account = activeAccount.account
-        let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-
-        guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, parentItemIdentifier.rawValue)) else {
+        guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, parentItemIdentifier.rawValue)) else {
             completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
             return
         }
         
-        let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
-
         let fileName = fileURL.lastPathComponent
         let fileNameLocalPath = fileURL.path
 
@@ -403,7 +378,7 @@ class FileProvider: NSFileProviderExtension {
 
             // Copy file
             self.createFileProviderItem(metadata.fileID, fromFileNamePath: fileURL.path, fileName: fileName)
-            try? self.fileManager.copyItem(atPath: fileURL.path, toPath: directoryUser!+"/"+metadata.fileID)
+            try? self.fileManager.copyItem(atPath: fileURL.path, toPath: directoryUser+"/"+metadata.fileID)
 
             // add item
             let item = FileProviderItem(metadata: metadataDB, serverUrl: directoryParent.serverUrl)

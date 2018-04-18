@@ -28,20 +28,14 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         var serverUrl: String?
         var metadatas: [tableMetadata]?
 
-        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
-            observer.finishEnumerating(upTo: nil)
-            return
-        }
-        let account = activeAccount.account
-
         if #available(iOSApplicationExtension 11.0, *) {
             
             // Select ServerUrl
             if (enumeratedItemIdentifier == .rootContainer) {
-                serverUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
+                serverUrl = homeServerUrl
             } else {
-                if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", activeAccount.account, enumeratedItemIdentifier.rawValue))  {
-                    if let directorySource = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", activeAccount.account, metadata.directoryID))  {
+                if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, enumeratedItemIdentifier.rawValue))  {
+                    if let directorySource = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, metadata.directoryID))  {
                         serverUrl = directorySource.serverUrl + "/" + metadata.fileName
                     }
                 }
@@ -76,8 +70,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             }
             
             // Read Folder
-            let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
-            ocNetworking?.readFolder(withServerUrl: serverUrl, depth: "1", account: activeAccount.account, success: { (metadatas, metadataFolder, directoryID) in
+            ocNetworking?.readFolder(withServerUrl: serverUrl, depth: "1", account: account, success: { (metadatas, metadataFolder, directoryID) in
                 
                 if (metadatas != nil) {
                     NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", account, directoryID!), clearDateReadDirectoryID: directoryID!)

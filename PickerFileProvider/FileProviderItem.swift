@@ -57,15 +57,8 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     
     init(metadata: tableMetadata, serverUrl: String) {
         
-        // Account
-        guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
-            itemIdentifier = NSFileProviderItemIdentifier("\(metadata.fileID)")
-            parentItemIdentifier = NSFileProviderItemIdentifier("")
-            return
-        }
-        
         // isRoot ?
-        if (serverUrl == CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)) {
+        if (serverUrl == homeServerUrl) {
             self.isRoot = true
         }
 
@@ -104,8 +97,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
         // Verify file exists on cache
         if (!metadata.directory) {
             
-            let directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
-            let filePath = "\(directoryUser!)/\(metadata.fileID)"
+            let filePath = "\(directoryUser)/\(metadata.fileID)"
             
             if FileManager().fileExists(atPath: filePath) {
                 self.isDownloaded = true
