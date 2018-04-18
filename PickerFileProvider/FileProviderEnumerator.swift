@@ -25,7 +25,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         
         var items: [NSFileProviderItemProtocol] = []
         var serverUrl: String?
-        var metadatas: [tableMetadata]?
         var numRecord = 0
 
         guard let activeAccount = NCManageDatabase.sharedInstance.getAccountActive() else {
@@ -58,20 +57,13 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 return
             }
             
-            // select item from database
-            if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", account, serverUrl))  {
-                metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, directory.directoryID), sorted: "fileName", ascending: true)
-            }
-            
+           
             // Calculate Page
             if (page != NSFileProviderPage.initialPageSortedByDate as NSFileProviderPage && page != NSFileProviderPage.initialPageSortedByName as NSFileProviderPage) {
                 
-                let stringPrevPage = Int(String(data: page.rawValue, encoding: .utf8)!)
-                if (metadatas != nil) {
-                    observer.didEnumerate(items)
-                } else {
-                    observer.finishEnumerating(upTo: nil)
-                }
+                let items = self.selectItems(page: page, account: account, serverUrl: serverUrl)
+                observer.didEnumerate(items)
+                observer.finishEnumerating(upTo: nil)
             }
             
             // Read Folder
@@ -116,6 +108,29 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
             // < iOS 11
             observer.finishEnumerating(upTo: nil)
         }
+    }
+    
+    func selectItems(page: NSFileProviderPage, account: String, serverUrl: String) -> [NSFileProviderItemProtocol]? {
+        
+        var items: [NSFileProviderItemProtocol] = []
+        let numPage = Int(String(data: page.rawValue, encoding: .utf8)!)!
+        let start = numPage * 10 + 1
+        let stop = start + 9
+        var counter = 0
+
+        if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND serverUrl = %@", account, serverUrl))  {
+            if let metadatas = NCManageDatabase.sharedInstance.getMetadatas(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, directory.directoryID), sorted: "fileName", ascending: true) {
+                for metadata in metadatas {
+                    counter += 1
+                    if (counter >= start && counter <= stop) {
+                        let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
+                        items.append(item)
+                    }
+                }
+            }
+        }
+        
+        return items
     }
     
     func enumerateChanges(for observer: NSFileProviderChangeObserver, from anchor: NSFileProviderSyncAnchor) {
