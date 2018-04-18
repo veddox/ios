@@ -65,7 +65,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     items = self.selectItems(numPage: numPage, account: account, serverUrl: serverUrl, metadatas: metadatas!)
                     observer.didEnumerate(items)
                 }
-                
                 if (items.count == self.recordForPage) {
                     numPage += 1
                     let providerPage = NSFileProviderPage("\(numPage)".data(using: .utf8)!)
@@ -73,6 +72,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 } else {
                     observer.finishEnumerating(upTo: nil)
                 }
+                return
             }
             
             // Read Folder
@@ -86,7 +86,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                         observer.didEnumerate(items)
                     }
                 }
-                
                 if (items.count == self.recordForPage) {
                     let providerPage = NSFileProviderPage("1".data(using: .utf8)!)
                     observer.finishEnumerating(upTo: providerPage)
@@ -101,7 +100,6 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                     items = self.selectItems(numPage: 0, account: account, serverUrl: serverUrl, metadatas: metadatas!)
                     observer.didEnumerate(items)
                 }
-                
                 if (items.count == self.recordForPage) {
                     let providerPage = NSFileProviderPage("1".data(using: .utf8)!)
                     observer.finishEnumerating(upTo: providerPage)
@@ -125,10 +123,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
         for metadata in metadatas {
             counter += 1
-                if (counter >= start && counter <= stop) {
-                    let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
-                    items.append(item)
-                }
+            if (counter >= start && counter <= stop) {
+                let item = FileProviderItem(metadata: metadata, serverUrl: serverUrl)
+                items.append(item)
+            }
         }
     
         return items
