@@ -81,10 +81,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                 
                 if (metadatas != nil) {
                     NCManageDatabase.sharedInstance.deleteMetadata(predicate: NSPredicate(format: "account = %@ AND directoryID = %@ AND session = ''", account, directoryID!), clearDateReadDirectoryID: directoryID!)
-                    _ = NCManageDatabase.sharedInstance.addMetadatas(metadatas as! [tableMetadata], serverUrl: serverUrl)
-                    
-                    items = self.selectItems(numPage: 0, account: account, serverUrl: serverUrl, metadatas: metadatas as! [tableMetadata])
-                    observer.didEnumerate(items)
+                    if let metadataDB = NCManageDatabase.sharedInstance.addMetadatas(metadatas as! [tableMetadata], serverUrl: serverUrl) {
+                        items = self.selectItems(numPage: 0, account: account, serverUrl: serverUrl, metadatas: metadataDB)
+                        observer.didEnumerate(items)
+                    }
                 }
                 
                 if (items.count == self.recordForPage) {
