@@ -18,6 +18,7 @@ var accountPassword = ""
 var accountUrl = ""
 var homeServerUrl = ""
 var directoryUser = ""
+var enumerateAnchor = [String]()
 
 @available(iOSApplicationExtension 11.0, *)
 

@@ -12,9 +12,26 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     
     var enumeratedItemIdentifier: NSFileProviderItemIdentifier
     let recordForPage = 10
+    var serverUrl: String?
     
     init(enumeratedItemIdentifier: NSFileProviderItemIdentifier) {
+        
         self.enumeratedItemIdentifier = enumeratedItemIdentifier
+        
+        // Select ServerUrl
+        if #available(iOSApplicationExtension 11.0, *) {
+
+            if (enumeratedItemIdentifier == .rootContainer) {
+                serverUrl = homeServerUrl
+            } else {
+                if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, enumeratedItemIdentifier.rawValue))  {
+                    if let directorySource = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, metadata.directoryID))  {
+                        serverUrl = directorySource.serverUrl + "/" + metadata.fileName
+                    }
+                }
+            }
+        }
+        
         super.init()
     }
 
@@ -25,21 +42,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     func enumerateItems(for observer: NSFileProviderEnumerationObserver, startingAt page: NSFileProviderPage) {
         
         var items: [NSFileProviderItemProtocol] = []
-        var serverUrl: String?
         var metadatas: [tableMetadata]?
 
         if #available(iOSApplicationExtension 11.0, *) {
             
-            // Select ServerUrl
-            if (enumeratedItemIdentifier == .rootContainer) {
-                serverUrl = homeServerUrl
-            } else {
-                if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, enumeratedItemIdentifier.rawValue))  {
-                    if let directorySource = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, metadata.directoryID))  {
-                        serverUrl = directorySource.serverUrl + "/" + metadata.fileName
-                    }
-                }
-            }
             guard let serverUrl = serverUrl else {
                 observer.finishEnumerating(upTo: nil)
                 return
@@ -136,10 +142,18 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
          - inform the observer when you have finished enumerating up to a subsequent sync anchor
          */
         
-        print("enumerateChanges")
+        //observer.finishEnumeratingChanges(upTo: anchor, moreComing: false)
+    
+        enumerateAnchor.append(serverUrl!)
     }
     
-    //func currentSyncAnchor(completionHandler: @escaping (NSFileProviderSyncAnchor?) -> Void) {
-    //}
-
+    func currentSyncAnchor(completionHandler: @escaping (NSFileProviderSyncAnchor?) -> Void) {
+        
+        guard let serverUrl = serverUrl else {
+            return
+        }
+        
+        let anchor = NSFileProviderSyncAnchor(serverUrl.data(using: .utf8)!)
+        completionHandler(anchor)
+    }
 }
