@@ -12,6 +12,9 @@ import MobileCoreServices
 
 var ocNetworking: OCnetworking?
 var account = ""
+var accountUser = ""
+var accountUserID = ""
+var accountPassword = ""
 var accountUrl = ""
 var homeServerUrl = ""
 var directoryUser = ""
@@ -31,11 +34,14 @@ class FileProvider: NSFileProviderExtension {
         }
         
         account = activeAccount.account
+        accountUser = activeAccount.user
+        accountUserID = activeAccount.userID
+        accountPassword = activeAccount.password
         accountUrl = activeAccount.url
         homeServerUrl = CCUtility.getHomeServerUrlActiveUrl(activeAccount.url)
         directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
 
-        ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: activeAccount.user, withUserID: activeAccount.userID, withPassword: activeAccount.password, withUrl: activeAccount.url)
+        ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: accountUser, withUserID: accountUserID, withPassword: accountPassword, withUrl: accountUrl)
     }
     
     override func item(for identifier: NSFileProviderItemIdentifier) throws -> NSFileProviderItem {
