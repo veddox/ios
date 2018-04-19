@@ -334,9 +334,21 @@ class FileProvider: NSFileProviderExtension {
         }
         
         let fileName = fileURL.lastPathComponent
-        let fileNameLocalPath = fileURL.path
+        let fileNameLocalPath = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileURL.lastPathComponent)
 
-        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath, success: { (fileID, etag, date) in
+        let fc = NSFileCoordinator()
+        var error: NSError?
+        
+        fc.coordinate(readingItemAt: fileURL, options: NSFileCoordinator.ReadingOptions.forUploading, error: &error) { (url) in
+            let fileData = self.fileManager.contents(atPath: url.path)
+            do {
+                try fileData?.write(to: fileNameLocalPath!)
+            } catch {
+                print(error)
+            }
+        }
+        
+        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath?.path, success: { (fileID, etag, date) in
             
             let metadata = tableMetadata()
             
