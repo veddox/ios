@@ -72,7 +72,7 @@ class FileProvider: NSFileProviderExtension {
             }
         }
         // TODO: implement the actual lookup
-        throw NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:])
+        throw NSFileProviderError(.noSuchItem)
     }
     
     override func urlForItem(withPersistentIdentifier identifier: NSFileProviderItemIdentifier) -> URL? {
@@ -158,7 +158,7 @@ class FileProvider: NSFileProviderExtension {
             fileSize = attr[FileAttributeKey.size] as! UInt64
         } catch {
             print("Error: \(error)")
-            completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+            completionHandler(NSFileProviderError(.noSuchItem))
         }
             
         // Do not exists
@@ -168,12 +168,12 @@ class FileProvider: NSFileProviderExtension {
             let itemIdentifier = pathComponents[pathComponents.count - 2]
             
             guard let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, itemIdentifier)) else {
-                completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                completionHandler(NSFileProviderError(.noSuchItem))
                 return
             }
                 
             guard let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, metadata.directoryID)) else {
-                completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                completionHandler(NSFileProviderError(.noSuchItem))
                 return
             }
 
@@ -186,7 +186,7 @@ class FileProvider: NSFileProviderExtension {
                 completionHandler(nil)
                     
             }, failure: { (message, errorCode) in
-                completionHandler(NSError(domain: NSCocoaErrorDomain, code: NSFeatureUnsupportedError, userInfo:[:]))
+                completionHandler(NSFileProviderError(.serverUnreachable))
             })
                 
         } else {
@@ -271,7 +271,7 @@ class FileProvider: NSFileProviderExtension {
                             let data = try Data.init(contentsOf: url)
                             perThumbnailCompletionHandler(item, data, nil)
                         } catch {
-                            perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
+                            perThumbnailCompletionHandler(item, nil, NSFileProviderError(.noSuchItem))
                         }
                         
                         counterProgress += 1
@@ -281,7 +281,7 @@ class FileProvider: NSFileProviderExtension {
                         
                     }, failure: { (message, errorCode) in
 
-                        perThumbnailCompletionHandler(item, nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
+                        perThumbnailCompletionHandler(item, nil, NSFileProviderError(.serverUnreachable))
                         
                         counterProgress += 1
                         if (counterProgress == progress.totalUnitCount) {
@@ -310,14 +310,14 @@ class FileProvider: NSFileProviderExtension {
     override func createDirectory(withName directoryName: String, inParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
 
         guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, parentItemIdentifier.rawValue)) else {
-            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+            completionHandler(nil, NSFileProviderError(.noSuchItem))
             return
         }
         
         ocNetworking?.createFolder(directoryName, serverUrl: directoryParent.serverUrl, account: account, success: { (fileID, date) in
             
             guard let newTableDirectory = NCManageDatabase.sharedInstance.addDirectory(encrypted: false, favorite: false, fileID: fileID, permissions: nil, serverUrl: directoryParent.serverUrl+"/"+directoryName) else {
-                completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+                completionHandler(nil, NSFileProviderError(.noSuchItem))
                 return
             }
             
@@ -336,19 +336,19 @@ class FileProvider: NSFileProviderExtension {
             completionHandler(item, nil)
             
         }, failure: { (message, errorCode) in
-            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
+            completionHandler(nil, NSFileProviderError(.serverUnreachable))
         })
     }
     
     override func importDocument(at fileURL: URL, toParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
         
         guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, parentItemIdentifier.rawValue)) else {
-            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+            completionHandler(nil, NSFileProviderError(.noSuchItem))
             return
         }
         
         if fileURL.startAccessingSecurityScopedResource() == false {
-            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
+            completionHandler(nil, NSFileProviderError(.noSuchItem))
             return
         }
         
@@ -377,7 +377,7 @@ class FileProvider: NSFileProviderExtension {
             CCUtility.insertTypeFileIconName(fileName, metadata: metadata)
             
             guard let metadataDB = NCManageDatabase.sharedInstance.addMetadata(metadata) else {
-                completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSCoderValueNotFoundError, userInfo:[:]))
+                completionHandler(nil, NSFileProviderError(.noSuchItem))
                 return
             }
 
@@ -393,7 +393,7 @@ class FileProvider: NSFileProviderExtension {
 
         }, failure: { (message, errorCode) in
             fileURL.stopAccessingSecurityScopedResource()
-            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
+            completionHandler(nil, NSFileProviderError(.serverUnreachable))
         })
     }
     
