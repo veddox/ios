@@ -37,7 +37,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     // Tracking Usage
     var contentModificationDate: Date?                              // The date the item was last modified
     var creationDate: Date?                                         // The date the item was created
-    var lastUsedDate: Date?                                         // The date the item was last used
+    //var lastUsedDate: Date?                                         // The date the item was last used
 
     // Tracking Versions
     var versionIdentifier: Data?                                    // A data value used to determine when the item changes

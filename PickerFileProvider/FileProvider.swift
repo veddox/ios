@@ -347,6 +347,11 @@ class FileProvider: NSFileProviderExtension {
             return
         }
         
+        if fileURL.startAccessingSecurityScopedResource() == false {
+            completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSFileNoSuchFileError, userInfo:[:]))
+            return
+        }
+        
         let fileName = fileURL.lastPathComponent
         let fileNameLocalPath = fileURL.path
 
@@ -383,9 +388,11 @@ class FileProvider: NSFileProviderExtension {
             // add item
             let item = FileProviderItem(metadata: metadataDB, serverUrl: directoryParent.serverUrl)
             
+            fileURL.stopAccessingSecurityScopedResource()
             completionHandler(item, nil)
 
         }, failure: { (message, errorCode) in
+            fileURL.stopAccessingSecurityScopedResource()
             completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: errorCode, userInfo:[:]))
         })
     }
