@@ -339,7 +339,6 @@ class FileProvider: NSFileProviderExtension {
         let fileName = fileURL.lastPathComponent
         let fileNameLocalPath = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileURL.lastPathComponent)!
         
-        //fileCoordinator.coordinate(readingItemAt: fileURL, options: .withoutChanges, error: nil, byAccessor: { newURL in
         fileCoordinator.coordinate(readingItemAt: fileURL, options: NSFileCoordinator.ReadingOptions.withoutChanges, error: &error) { (url) in
             
             do {
