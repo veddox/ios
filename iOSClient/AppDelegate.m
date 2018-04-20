@@ -153,6 +153,14 @@
     NSString *toPathDB = [NSString stringWithFormat:@"%@/nextcloud.realm", [CCUtility getDirectoryDocuments]];
     [[NSFileManager defaultManager] removeItemAtPath:toPathDB error:nil];
     [[NSFileManager defaultManager] copyItemAtPath:atPathDB toPath:toPathDB error:nil];
+    
+    /*
+    NSLog(@"[LOG] Copy All Group");
+    atPathDB = [dirGroup  path];
+    toPathDB = [NSString stringWithFormat:@"%@/Group/", [CCUtility getDirectoryDocuments]];
+    [[NSFileManager defaultManager] removeItemAtPath:toPathDB error:nil];
+    [[NSFileManager defaultManager] copyItemAtPath:atPathDB toPath:toPathDB error:nil];
+    */
 #endif
     
     // Operation Queue OC Networking
