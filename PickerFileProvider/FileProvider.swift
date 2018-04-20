@@ -323,6 +323,9 @@ class FileProvider: NSFileProviderExtension {
     
     override func importDocument(at fileURL: URL, toParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
         
+        let fileCoordinator = NSFileCoordinator()
+        var error: NSError?
+        
         guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, parentItemIdentifier.rawValue)) else {
             completionHandler(nil, NSFileProviderError(.noSuchItem))
             return
@@ -335,10 +338,23 @@ class FileProvider: NSFileProviderExtension {
         
         let fileName = fileURL.lastPathComponent
         let fileNameLocalPath = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileURL.lastPathComponent)!
-
-        let fileCoordinator = NSFileCoordinator()
-        var error: NSError?
         
+        //fileCoordinator.coordinate(readingItemAt: fileURL, options: .withoutChanges, error: nil, byAccessor: { newURL in
+        fileCoordinator.coordinate(readingItemAt: fileURL, options: NSFileCoordinator.ReadingOptions.withoutChanges, error: &error) { (url) in
+            
+            do {
+                try FileManager.default.removeItem(atPath: fileNameLocalPath.path)
+            } catch _ {
+                print("file do not exists")
+            }
+            
+            do {
+                try FileManager.default.copyItem(atPath: url.path, toPath: fileNameLocalPath.path)
+            } catch _ {
+                print("file do not exists")
+            }
+        }
+            
         fileURL.stopAccessingSecurityScopedResource()
 
         ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath.path, success: { (fileID, etag, date) in
