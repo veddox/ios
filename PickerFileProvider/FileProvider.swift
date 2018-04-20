@@ -56,8 +56,8 @@ class FileProvider: NSFileProviderExtension {
                 metadata.directory = true
                 metadata.directoryID = directory.directoryID
                 metadata.fileID = identifier.rawValue
-                metadata.fileName = "."
-                metadata.fileNameView = "."
+                metadata.fileName = NCBrandOptions.sharedInstance.brand
+                metadata.fileNameView = NCBrandOptions.sharedInstance.brand
                 metadata.typeFile = k_metadataTypeFile_directory
                     
                 return FileProviderItem(metadata: metadata, serverUrl: homeServerUrl)
@@ -334,21 +334,24 @@ class FileProvider: NSFileProviderExtension {
         }
         
         let fileName = fileURL.lastPathComponent
-        let fileNameLocalPath = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileURL.lastPathComponent)
+        let fileNameLocalPath = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileURL.lastPathComponent)!
 
-        let fc = NSFileCoordinator()
+        let fileCoordinator = NSFileCoordinator()
         var error: NSError?
         
-        fc.coordinate(readingItemAt: fileURL, options: NSFileCoordinator.ReadingOptions.forUploading, error: &error) { (url) in
-            let fileData = self.fileManager.contents(atPath: url.path)
+        fileCoordinator.coordinate(writingItemAt: fileURL, options: [], error: &error) { (newURL) in
             do {
-                try fileData?.write(to: fileNameLocalPath!)
+                try FileManager.default.createDirectory(at: newURL, withIntermediateDirectories: true, attributes: nil)
             } catch {
-                print(error)
+                // Handle error
             }
+            
+            print(".")
         }
         
-        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath?.path, success: { (fileID, etag, date) in
+        fileURL.stopAccessingSecurityScopedResource()
+
+        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath.path, success: { (fileID, etag, date) in
             
             let metadata = tableMetadata()
             
@@ -381,11 +384,9 @@ class FileProvider: NSFileProviderExtension {
             // add item
             let item = FileProviderItem(metadata: metadataDB, serverUrl: directoryParent.serverUrl)
             
-            fileURL.stopAccessingSecurityScopedResource()
             completionHandler(item, nil)
 
         }, failure: { (message, errorCode) in
-            fileURL.stopAccessingSecurityScopedResource()
             completionHandler(nil, NSFileProviderError(.serverUnreachable))
         })
     }
