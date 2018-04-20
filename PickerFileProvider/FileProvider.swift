@@ -339,16 +339,6 @@ class FileProvider: NSFileProviderExtension {
         let fileCoordinator = NSFileCoordinator()
         var error: NSError?
         
-        fileCoordinator.coordinate(writingItemAt: fileURL, options: [], error: &error) { (newURL) in
-            do {
-                try FileManager.default.createDirectory(at: newURL, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                // Handle error
-            }
-            
-            print(".")
-        }
-        
         fileURL.stopAccessingSecurityScopedResource()
 
         ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath.path, success: { (fileID, etag, date) in
