@@ -71,9 +71,9 @@ class FileProvider: NSFileProviderExtension {
                     
                     if (!metadata.directory) {
                         
-                        let identifierPathUrl = groupURL!.appendingPathComponent("File Provider Storage").appendingPathComponent(identifier.rawValue)
+                        let identifierPathUrl = groupURL!.appendingPathComponent("File Provider Storage").appendingPathComponent(metadata.fileID)
                         let toPath = "\(identifierPathUrl.path)/\(metadata.fileNameView)"
-                        let atPath = "\(directoryUser)/\(identifier.rawValue)"
+                        let atPath = "\(directoryUser)/\(metadata.fileID)"
                         
                         if !FileManager.default.fileExists(atPath: toPath) {
 
@@ -104,6 +104,7 @@ class FileProvider: NSFileProviderExtension {
         }
         
         // in this implementation, all paths are structured as <base storage directory>/<item identifier>/<item file name>
+        
         let manager = NSFileProviderManager.default
         var url = manager.documentStorageURL.appendingPathComponent(identifier.rawValue, isDirectory: true)
         
