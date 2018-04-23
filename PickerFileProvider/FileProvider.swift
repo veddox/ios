@@ -23,8 +23,6 @@ var directoryUser = ""
 
 class FileProvider: NSFileProviderExtension {
     
-    var fileManager = FileManager()
-
     override init() {
         
         super.init()
@@ -135,7 +133,7 @@ class FileProvider: NSFileProviderExtension {
         var fileSize : UInt64 = 0
         
         do {
-            let attr = try fileManager.attributesOfItem(atPath: url.path)
+            let attr = try FileManager.default.attributesOfItem(atPath: url.path)
             fileSize = attr[FileAttributeKey.size] as! UInt64
         } catch {
             print("Error: \(error)")
@@ -159,6 +157,10 @@ class FileProvider: NSFileProviderExtension {
             }
 
             ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser)/\(itemIdentifier)", success: {
+                
+                // copy download file to url
+                try? FileManager.default.removeItem(atPath: url.path)
+                try? FileManager.default.copyItem(atPath: "\(directoryUser)/\(itemIdentifier)", toPath: url.path)
                 
                 NCManageDatabase.sharedInstance.addLocalFile(metadata: metadata)
                 if (metadata.typeFile == k_metadataTypeFile_image) {
@@ -200,7 +202,7 @@ class FileProvider: NSFileProviderExtension {
                 metadata.date = date! as NSDate
               
                 do {
-                    let attributes = try self.fileManager.attributesOfItem(atPath: url.path)
+                    let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
                     metadata.size = attributes[FileAttributeKey.size] as! Double
                 } catch {
                 }
@@ -405,7 +407,7 @@ class FileProvider: NSFileProviderExtension {
             metadata.fileNameView = fileName
 
             do {
-                let attributes = try self.fileManager.attributesOfItem(atPath: fileURL.path)
+                let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
                 metadata.size = attributes[FileAttributeKey.size] as! Double
             } catch {
             }
@@ -453,13 +455,13 @@ class FileProvider: NSFileProviderExtension {
         }
         
         if (rewrite) {
-            try? fileManager.removeItem(atPath: toFilePath)
+            try? FileManager.default.removeItem(atPath: toFilePath)
         }
         
-        if fileManager.fileExists(atPath: fromFileNamePath) {
-            try? fileManager.copyItem(atPath: fromFileNamePath, toPath: toFilePath)
+        if FileManager.default.fileExists(atPath: fromFileNamePath) {
+            try? FileManager.default.copyItem(atPath: fromFileNamePath, toPath: toFilePath)
         } else {
-            fileManager.createFile(atPath: toFilePath, contents: nil, attributes: nil)
+            FileManager.default.createFile(atPath: toFilePath, contents: nil, attributes: nil)
         }
     }
 }
