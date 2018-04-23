@@ -212,11 +212,12 @@ class FileProvider: NSFileProviderExtension {
         let identifier = NSFileProviderItemIdentifier(pathComponents[pathComponents.count - 2])
 
         if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, identifier.rawValue))  {
+            
             guard let serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) else {
                 return
             }
-        
-            ocNetworking?.uploadFileNameServerUrl(serverUrl+"/"+fileName, fileNameLocalPath: url.path, success: { (fileID, etag, date) in
+            
+            _ =  ocNetworking?.uploadFileNameServerUrl(serverUrl+"/"+fileName, fileNameLocalPath: url.path, success: { (fileID, etag, date) in
                 
                 let toPath = "\(directoryUser)/\(metadata.fileID)"
 
@@ -233,14 +234,19 @@ class FileProvider: NSFileProviderExtension {
                 } catch {
                 }
                 
-                guard NCManageDatabase.sharedInstance.addMetadata(metadata) != nil else {
-                    _ = NSFileProviderError(.noSuchItem)
+                guard let metadataDB = NCManageDatabase.sharedInstance.addMetadata(metadata) else {
                     return
                 }
-        
+                
+                // item
+                _ = FileProviderItem(metadata: metadataDB, serverUrl: serverUrl)
+                
             }, failure: { (message, errorCode) in
-                _ = NSFileProviderError(.noSuchItem)
             })
+            
+            //NSFileProviderManager.default.register(sessionTask!, forItemWithIdentifier: identifier) { (error) in
+            //    print("ciao")
+            //}
         }
     }
     
@@ -419,7 +425,7 @@ class FileProvider: NSFileProviderExtension {
             
         fileURL.stopAccessingSecurityScopedResource()
 
-        ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath.path, success: { (fileID, etag, date) in
+        _ = ocNetworking?.uploadFileNameServerUrl(directoryParent.serverUrl+"/"+fileName, fileNameLocalPath: fileNameLocalPath.path, success: { (fileID, etag, date) in
             
             let metadata = tableMetadata()
             
