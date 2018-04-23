@@ -70,7 +70,7 @@ class FileProvider: NSFileProviderExtension {
                     
                     if (!metadata.directory) {
                         let fromFileNamePath = "\(directoryUser)/\(identifier.rawValue)"
-                        createFileProviderItem(identifier.rawValue, fromFileNamePath: fromFileNamePath, fileName: metadata.fileNameView)
+                        createFileProviderItem(identifier.rawValue, fromFileNamePath: fromFileNamePath, fileName: metadata.fileNameView, rewrite: false)
                     }
                 
                     return FileProviderItem(metadata: metadata, serverUrl: directory.serverUrl)
@@ -178,14 +178,6 @@ class FileProvider: NSFileProviderExtension {
     }
     
     override func itemChanged(at url: URL) {
-        // Called at some point after the file has changed; the provider may then trigger an upload
-        
-        /* TODO:
-         - mark file at <url> as needing an update in the model
-         - if there are existing NSURLSessionTasks uploading this file, cancel them
-         - create a fresh background NSURLSessionTask and schedule it to upload the current modifications
-         - register the NSURLSessionTask with NSFileProviderManager to provide progress updates
-         */
         
         let fileSize = (try! FileManager.default.attributesOfItem(atPath: url.path)[FileAttributeKey.size] as! NSNumber).uint64Value
         NSLog("[LOG] Item changed at URL %@ %lu", url as NSURL, fileSize)
@@ -418,9 +410,8 @@ class FileProvider: NSFileProviderExtension {
                 return
             }
 
-            // Copy file
-            self.createFileProviderItem(metadata.fileID, fromFileNamePath: fileURL.path, fileName: fileName)
-            try? self.fileManager.copyItem(atPath: fileURL.path, toPath: directoryUser+"/"+metadata.fileID)
+            // Copy with rewrite file
+            self.createFileProviderItem(metadata.fileID, fromFileNamePath: fileURL.path, fileName: fileName, rewrite: true)
 
             // add item
             let item = FileProviderItem(metadata: metadataDB, serverUrl: directoryParent.serverUrl)
@@ -434,7 +425,7 @@ class FileProvider: NSFileProviderExtension {
     
     // ----------------------------------------------------------------------------------------------------------------------------
     
-    func createFileProviderItem(_ fileProviderItem: String, fromFileNamePath: String, fileName: String) {
+    func createFileProviderItem(_ fileProviderItem: String, fromFileNamePath: String, fileName: String, rewrite: Bool) {
         
         guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
             return
@@ -452,6 +443,10 @@ class FileProvider: NSFileProviderExtension {
                 print("error creating filepath: \(error)")
                 return
             }
+        }
+        
+        if (rewrite) {
+            try? fileManager.removeItem(atPath: toFilePath)
         }
         
         if fileManager.fileExists(atPath: fromFileNamePath) {
