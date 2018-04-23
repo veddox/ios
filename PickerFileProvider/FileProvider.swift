@@ -186,6 +186,42 @@ class FileProvider: NSFileProviderExtension {
          - create a fresh background NSURLSessionTask and schedule it to upload the current modifications
          - register the NSURLSessionTask with NSFileProviderManager to provide progress updates
          */
+        
+        let fileSize = (try! FileManager.default.attributesOfItem(atPath: url.path)[FileAttributeKey.size] as! NSNumber).uint64Value
+        NSLog("[LOG] Item changed at URL %@ %lu", url as NSURL, fileSize)
+        if (fileSize == 0) {
+            return
+        }
+        
+        let fileName = url.lastPathComponent
+        let pathComponents = url.pathComponents
+        assert(pathComponents.count > 2)
+        let itemIdentifier = NSFileProviderItemIdentifier(pathComponents[pathComponents.count - 2])
+
+        if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, itemIdentifier.rawValue))  {
+            guard let serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) else {
+                return
+            }
+        
+            ocNetworking?.uploadFileNameServerUrl(serverUrl+"/"+fileName, fileNameLocalPath: url.path, success: { (fileID, etag, date) in
+                
+                metadata.date = date! as NSDate
+              
+                do {
+                    let attributes = try self.fileManager.attributesOfItem(atPath: url.path)
+                    metadata.size = attributes[FileAttributeKey.size] as! Double
+                } catch {
+                }
+                
+                guard NCManageDatabase.sharedInstance.addMetadata(metadata) != nil else {
+                    _ = NSFileProviderError(.noSuchItem)
+                    return
+                }
+        
+            }, failure: { (message, errorCode) in
+                _ = NSFileProviderError(.noSuchItem)
+            })
+        }
     }
     
     override func stopProvidingItem(at url: URL) {
@@ -323,6 +359,7 @@ class FileProvider: NSFileProviderExtension {
     
     override func importDocument(at fileURL: URL, toParentItemIdentifier parentItemIdentifier: NSFileProviderItemIdentifier, completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) {
         
+        let fileName = fileURL.lastPathComponent
         let fileCoordinator = NSFileCoordinator()
         var error: NSError?
         
@@ -336,7 +373,6 @@ class FileProvider: NSFileProviderExtension {
             return
         }
         
-        let fileName = fileURL.lastPathComponent
         let fileNameLocalPath = NSURL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(fileURL.lastPathComponent)!
         
         fileCoordinator.coordinate(readingItemAt: fileURL, options: NSFileCoordinator.ReadingOptions.withoutChanges, error: &error) { (url) in
@@ -407,7 +443,8 @@ class FileProvider: NSFileProviderExtension {
         var storagePathUrl = groupURL.appendingPathComponent("File Provider Storage")
         storagePathUrl = storagePathUrl.appendingPathComponent(fileProviderItem)
         let storagePath = storagePathUrl.path
-        
+        let toFilePath = "\(storagePath)/\(fileName)"
+
         if !FileManager.default.fileExists(atPath: storagePath) {
             do {
                 try FileManager.default.createDirectory(atPath: storagePath, withIntermediateDirectories: false, attributes: nil)
@@ -417,11 +454,6 @@ class FileProvider: NSFileProviderExtension {
             }
         }
         
-        // ??? move o create 0 file .. is correct ???
-        let toFilePath = "\(storagePath)/\(fileName)"
-            
-        try? fileManager.removeItem(atPath: toFilePath)
-            
         if fileManager.fileExists(atPath: fromFileNamePath) {
             try? fileManager.copyItem(atPath: fromFileNamePath, toPath: toFilePath)
         } else {
