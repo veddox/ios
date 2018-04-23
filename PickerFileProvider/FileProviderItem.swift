@@ -53,15 +53,9 @@ class FileProviderItem: NSObject, NSFileProviderItem {
     var downloadingError: Error?                                    // An error that occurred while downloading the item
 
     var isDirectory = false;
-    var isRoot = false
     
     init(metadata: tableMetadata, serverUrl: String) {
         
-        // isRoot ?
-        if (serverUrl == homeServerUrl) {
-            self.isRoot = true
-        }
-
         self.contentModificationDate = metadata.date as Date
         self.creationDate = metadata.date as Date
         self.documentSize = NSNumber(value: metadata.size)
@@ -75,7 +69,7 @@ class FileProviderItem: NSObject, NSFileProviderItem {
             self.parentItemIdentifier = NSFileProviderItemIdentifier.rootContainer
             
             // NOT .rootContainer
-            if (!isRoot) {
+            if (serverUrl != homeServerUrl) {
                 if let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", metadata.account, metadata.directoryID))  {
                     if let metadataParent = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", metadata.account, directoryParent.fileID))  {
                         self.parentItemIdentifier = NSFileProviderItemIdentifier(metadataParent.fileID)
