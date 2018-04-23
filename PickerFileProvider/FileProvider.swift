@@ -354,8 +354,15 @@ class FileProvider: NSFileProviderExtension {
         let fileName = fileURL.lastPathComponent
         let fileCoordinator = NSFileCoordinator()
         var error: NSError?
+        var directoryPredicate: NSPredicate
         
-        guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, parentItemIdentifier.rawValue)) else {
+        if parentItemIdentifier == .rootContainer {
+            directoryPredicate = NSPredicate(format: "account = %@ AND serverUrl = %@", account, homeServerUrl)
+        } else {
+            directoryPredicate = NSPredicate(format: "account = %@ AND fileID = %@", account, parentItemIdentifier.rawValue)
+        }
+        
+        guard let directoryParent = NCManageDatabase.sharedInstance.getTableDirectory(predicate: directoryPredicate) else {
             completionHandler(nil, NSFileProviderError(.noSuchItem))
             return
         }
