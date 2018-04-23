@@ -18,6 +18,7 @@ var accountPassword = ""
 var accountUrl = ""
 var homeServerUrl = ""
 var directoryUser = ""
+var groupURL: URL?
 
 @available(iOSApplicationExtension 11.0, *)
 
@@ -40,6 +41,8 @@ class FileProvider: NSFileProviderExtension {
         directoryUser = CCUtility.getDirectoryActiveUser(activeAccount.user, activeUrl: activeAccount.url)
 
         ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: accountUser, withUserID: accountUserID, withPassword: accountPassword, withUrl: accountUrl)
+        
+        groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups)
     }
     
     override func item(for identifier: NSFileProviderItemIdentifier) throws -> NSFileProviderItem {
@@ -67,8 +70,21 @@ class FileProvider: NSFileProviderExtension {
                 if let directory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account = %@ AND directoryID = %@", account, metadata.directoryID)) {
                     
                     if (!metadata.directory) {
-                        let fromFileNamePath = "\(directoryUser)/\(identifier.rawValue)"
-                        createFileProviderItem(identifier.rawValue, fromFileNamePath: fromFileNamePath, fileName: metadata.fileNameView, rewrite: false)
+                        
+                        let identifierPathUrl = groupURL!.appendingPathComponent("File Provider Storage").appendingPathComponent(identifier.rawValue)
+                        let toPath = "\(identifierPathUrl.path)/\(metadata.fileNameView)"
+                        let atPath = "\(directoryUser)/\(identifier.rawValue)"
+                        
+                        if !FileManager.default.fileExists(atPath: toPath) {
+
+                            try? FileManager.default.createDirectory(atPath: identifierPathUrl.path, withIntermediateDirectories: true, attributes: nil)
+    
+                            if FileManager.default.fileExists(atPath: atPath) {
+                                try? FileManager.default.copyItem(atPath: atPath, toPath: toPath)
+                            } else {
+                                FileManager.default.createFile(atPath: toPath, contents: nil, attributes: nil)
+                            }
+                        }
                     }
                 
                     return FileProviderItem(metadata: metadata, serverUrl: directory.serverUrl)
@@ -144,9 +160,9 @@ class FileProvider: NSFileProviderExtension {
         if fileSize == 0 {
                 
             let pathComponents = url.pathComponents
-            let itemIdentifier = pathComponents[pathComponents.count - 2]
+            let identifier = pathComponents[pathComponents.count - 2]
             
-            guard let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, itemIdentifier)) else {
+            guard let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, identifier)) else {
                 completionHandler(NSFileProviderError(.noSuchItem))
                 return
             }
@@ -156,11 +172,13 @@ class FileProvider: NSFileProviderExtension {
                 return
             }
 
-            ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser)/\(itemIdentifier)", success: {
+            ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser)/\(metadata.fileID)", success: {
                 
                 // copy download file to url
                 try? FileManager.default.removeItem(atPath: url.path)
-                try? FileManager.default.copyItem(atPath: "\(directoryUser)/\(itemIdentifier)", toPath: url.path)
+                try? FileManager.default.copyItem(atPath: "\(directoryUser)/\(metadata.fileID)", toPath: url.path)
+                // create thumbnail
+                CCGraphics.createNewImage(from: metadata.fileID, directoryUser: directoryUser, fileNameTo: metadata.fileID, extension: (metadata.fileNameView as NSString).pathExtension, size: "m", imageForUpload: false, typeFile: metadata.typeFile, writePreview: true, optimizedFileName: CCUtility.getOptimizedPhoto())
                 
                 NCManageDatabase.sharedInstance.addLocalFile(metadata: metadata)
                 if (metadata.typeFile == k_metadataTypeFile_image) {
@@ -190,14 +208,21 @@ class FileProvider: NSFileProviderExtension {
         let fileName = url.lastPathComponent
         let pathComponents = url.pathComponents
         assert(pathComponents.count > 2)
-        let itemIdentifier = NSFileProviderItemIdentifier(pathComponents[pathComponents.count - 2])
+        let identifier = NSFileProviderItemIdentifier(pathComponents[pathComponents.count - 2])
 
-        if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, itemIdentifier.rawValue))  {
+        if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, identifier.rawValue))  {
             guard let serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) else {
                 return
             }
         
             ocNetworking?.uploadFileNameServerUrl(serverUrl+"/"+fileName, fileNameLocalPath: url.path, success: { (fileID, etag, date) in
+                
+                let toPath = "\(directoryUser)/\(metadata.fileID)"
+
+                try? FileManager.default.removeItem(atPath: toPath)
+                try? FileManager.default.copyItem(atPath:  url.path, toPath: toPath)
+                // create thumbnail
+                CCGraphics.createNewImage(from: metadata.fileID, directoryUser: directoryUser, fileNameTo: metadata.fileID, extension: (metadata.fileNameView as NSString).pathExtension, size: "m", imageForUpload: false, typeFile: metadata.typeFile, writePreview: true, optimizedFileName: CCUtility.getOptimizedPhoto())
                 
                 metadata.date = date! as NSDate
               
@@ -419,8 +444,20 @@ class FileProvider: NSFileProviderExtension {
                 return
             }
 
-            // Copy with rewrite file
-            self.createFileProviderItem(metadata.fileID, fromFileNamePath: fileURL.path, fileName: fileName, rewrite: true)
+            // Copy on ItemIdentifier path
+            let identifierPathUrl = groupURL!.appendingPathComponent("File Provider Storage").appendingPathComponent(metadata.fileID)
+            let toPath = "\(identifierPathUrl.path)/\(metadata.fileNameView)"
+            
+            if !FileManager.default.fileExists(atPath: identifierPathUrl.path) {
+                do {
+                    try FileManager.default.createDirectory(atPath: identifierPathUrl.path, withIntermediateDirectories: true, attributes: nil)
+                } catch let error {
+                    print("error creating filepath: \(error)")
+                }
+            }
+            
+            try? FileManager.default.removeItem(atPath: toPath)
+            try? FileManager.default.copyItem(atPath:  fileNameLocalPath.path, toPath: toPath)
 
             // add item
             let item = FileProviderItem(metadata: metadataDB, serverUrl: directoryParent.serverUrl)
@@ -432,36 +469,4 @@ class FileProvider: NSFileProviderExtension {
         })
     }
     
-    // ----------------------------------------------------------------------------------------------------------------------------
-    
-    func createFileProviderItem(_ fileProviderItem: String, fromFileNamePath: String, fileName: String, rewrite: Bool) {
-        
-        guard let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: NCBrandOptions.sharedInstance.capabilitiesGroups) else {
-            return
-        }
-        
-        var storagePathUrl = groupURL.appendingPathComponent("File Provider Storage")
-        storagePathUrl = storagePathUrl.appendingPathComponent(fileProviderItem)
-        let storagePath = storagePathUrl.path
-        let toFilePath = "\(storagePath)/\(fileName)"
-
-        if !FileManager.default.fileExists(atPath: storagePath) {
-            do {
-                try FileManager.default.createDirectory(atPath: storagePath, withIntermediateDirectories: false, attributes: nil)
-            } catch let error {
-                print("error creating filepath: \(error)")
-                return
-            }
-        }
-        
-        if (rewrite) {
-            try? FileManager.default.removeItem(atPath: toFilePath)
-        }
-        
-        if FileManager.default.fileExists(atPath: fromFileNamePath) {
-            try? FileManager.default.copyItem(atPath: fromFileNamePath, toPath: toFilePath)
-        } else {
-            FileManager.default.createFile(atPath: toFilePath, contents: nil, attributes: nil)
-        }
-    }
 }
