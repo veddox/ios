@@ -24,6 +24,8 @@ var groupURL: URL?
 
 class FileProvider: NSFileProviderExtension {
     
+    var uploading = [String]()
+    
     override init() {
         
         super.init()
@@ -172,7 +174,7 @@ class FileProvider: NSFileProviderExtension {
                 completionHandler(NSFileProviderError(.noSuchItem))
                 return
             }
-
+        
             ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser)/\(metadata.fileID)", success: {
                 
                 // copy download file to url
@@ -211,11 +213,17 @@ class FileProvider: NSFileProviderExtension {
         assert(pathComponents.count > 2)
         let identifier = NSFileProviderItemIdentifier(pathComponents[pathComponents.count - 2])
 
+        if (uploading.contains(identifier.rawValue) == true) {
+            return
+        }
+        
         if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "account = %@ AND fileID = %@", account, identifier.rawValue))  {
             
             guard let serverUrl = NCManageDatabase.sharedInstance.getServerUrl(metadata.directoryID) else {
                 return
             }
+            
+            uploading.append(identifier.rawValue)
             
             _ =  ocNetworking?.uploadFileNameServerUrl(serverUrl+"/"+fileName, fileNameLocalPath: url.path, success: { (fileID, etag, date) in
                 
@@ -241,12 +249,12 @@ class FileProvider: NSFileProviderExtension {
                 // item
                 _ = FileProviderItem(metadata: metadataDB, serverUrl: serverUrl)
                 
+                self.uploading = self.uploading.filter() { $0 != identifier.rawValue }
+        
             }, failure: { (message, errorCode) in
+                
+                self.uploading = self.uploading.filter() { $0 != identifier.rawValue }
             })
-            
-            //NSFileProviderManager.default.register(sessionTask!, forItemWithIdentifier: identifier) { (error) in
-            //    print("ciao")
-            //}
         }
     }
     

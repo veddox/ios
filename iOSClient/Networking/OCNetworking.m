@@ -132,14 +132,14 @@
 #pragma mark ===== download =====
 #pragma --------------------------------------------------------------------------------------------
 
-- (void)downloadFileNameServerUrl:(NSString *)fileNameServerUrl fileNameLocalPath:(NSString *)fileNameLocalPath success:(void (^)(void))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
+- (NSURLSessionTask *)downloadFileNameServerUrl:(NSString *)fileNameServerUrl fileNameLocalPath:(NSString *)fileNameLocalPath success:(void (^)(void))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
 {
     OCCommunication *communication = [CCNetworking sharedNetworking].sharedOCCommunication;
     
     [communication setCredentialsWithUser:_activeUser andUserID:_activeUserID andPassword:_activePassword];
     [communication setUserAgent:[CCUtility getUserAgent]];
     
-    [communication downloadFileSession:fileNameServerUrl toDestiny:fileNameLocalPath defaultPriority:YES onCommunication:communication progress:^(NSProgress *progress) {
+    NSURLSessionTask *sessionTask = [communication downloadFileSession:fileNameServerUrl toDestiny:fileNameLocalPath defaultPriority:YES onCommunication:communication progress:^(NSProgress *progress) {
 
         //float percent = roundf (progress.fractionCompleted * 100);
 
@@ -166,6 +166,8 @@
         
         failure(message, errorCode);
     }];
+    
+    return sessionTask;
 }
 
 #pragma --------------------------------------------------------------------------------------------
