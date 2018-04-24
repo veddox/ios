@@ -132,7 +132,7 @@
 #pragma mark ===== download =====
 #pragma --------------------------------------------------------------------------------------------
 
-- (NSURLSessionTask *)downloadFileNameServerUrl:(NSString *)fileNameServerUrl fileNameLocalPath:(NSString *)fileNameLocalPath success:(void (^)(void))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
+- (NSURLSessionTask *)downloadFileNameServerUrl:(NSString *)fileNameServerUrl fileNameLocalPath:(NSString *)fileNameLocalPath success:(void (^)(int64_t length))success failure:(void (^)(NSString *message, NSInteger errorCode))failure
 {
     OCCommunication *communication = [CCNetworking sharedNetworking].sharedOCCommunication;
     
@@ -145,7 +145,16 @@
 
     } successRequest:^(NSURLResponse *response, NSURL *filePath) {
 
-        success();
+        int64_t totalUnitCount = 0;
+        
+        NSDictionary *fields = [(NSHTTPURLResponse*)response allHeaderFields];
+
+        NSString *contentLength = [fields objectForKey:@"Content-Length"];
+        if(contentLength) {
+            totalUnitCount = (int64_t) [contentLength longLongValue];
+        }
+        
+        success(totalUnitCount);
         
     } failureRequest:^(NSURLResponse *response, NSError *error) {
         

@@ -174,19 +174,23 @@ class FileProvider: NSFileProviderExtension {
                 completionHandler(NSFileProviderError(.noSuchItem))
                 return
             }
-        
-            ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser)/\(metadata.fileID)", success: {
+            
+            _ = ocNetworking?.downloadFileNameServerUrl("\(directory.serverUrl)/\(metadata.fileName)", fileNameLocalPath: "\(directoryUser)/\(metadata.fileID)", success: { (lenght) in
                 
-                // copy download file to url
-                try? FileManager.default.removeItem(atPath: url.path)
-                try? FileManager.default.copyItem(atPath: "\(directoryUser)/\(metadata.fileID)", toPath: url.path)
-                // create thumbnail
-                CCGraphics.createNewImage(from: metadata.fileID, directoryUser: directoryUser, fileNameTo: metadata.fileID, extension: (metadata.fileNameView as NSString).pathExtension, size: "m", imageForUpload: false, typeFile: metadata.typeFile, writePreview: true, optimizedFileName: CCUtility.getOptimizedPhoto())
+                if (lenght > 0) {
+                    
+                    // copy download file to url
+                    try? FileManager.default.removeItem(atPath: url.path)
+                    try? FileManager.default.copyItem(atPath: "\(directoryUser)/\(metadata.fileID)", toPath: url.path)
+                    // create thumbnail
+                    CCGraphics.createNewImage(from: metadata.fileID, directoryUser: directoryUser, fileNameTo: metadata.fileID, extension: (metadata.fileNameView as NSString).pathExtension, size: "m", imageForUpload: false, typeFile: metadata.typeFile, writePreview: true, optimizedFileName: CCUtility.getOptimizedPhoto())
                 
-                NCManageDatabase.sharedInstance.addLocalFile(metadata: metadata)
-                if (metadata.typeFile == k_metadataTypeFile_image) {
-                    CCExifGeo.sharedInstance().setExifLocalTableEtag(metadata, directoryUser: directoryUser, activeAccount: account)
+                    NCManageDatabase.sharedInstance.addLocalFile(metadata: metadata)
+                    if (metadata.typeFile == k_metadataTypeFile_image) {
+                        CCExifGeo.sharedInstance().setExifLocalTableEtag(metadata, directoryUser: directoryUser, activeAccount: account)
+                    }
                 }
+                
                 completionHandler(nil)
                     
             }, failure: { (message, errorCode) in
