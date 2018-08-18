@@ -43,6 +43,7 @@ extern NSString *const flowEndpoint;
 //dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {
 
 //DispatchQueue.main.async
+//DispatchQueue.main.asyncAfter(deadline: .now() + 0.1)
 //DispatchQueue.global().async
 
 #define CALL_ORIGIN NSLog(@"Origin: [%@]", [[[[NSThread callStackSymbols] objectAtIndex:1] componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"[]"]] objectAtIndex:1])
@@ -105,6 +106,10 @@ extern NSString *const flowEndpoint;
 #define k_upload_session_wwan                           @"it.twsweb.Crypto-Cloud.upload.sessionwwan"
 #define k_upload_session_foreground                     @"it.twsweb.Crypto-Cloud.upload.sessionforeground"
 
+// Session Download Upload Extension
+#define k_download_session_extension                    @"com.nextcloud.download.session.extension"
+#define k_upload_session_extension                      @"com.nextcloud.upload.session.extension"
+
 // OperationQueue
 #define k_queue                                         @"it.twsweb.Crypto-Cloud.queue"
 #define k_download_queue                                @"it.twsweb.Crypto-Cloud.download.queue"
@@ -146,9 +151,6 @@ extern NSString *const flowEndpoint;
 
 // Search
 #define k_minCharsSearch                                2
-
-// Metadata ed ID
-#define k_uploadSessionID                               @"ID_UPLOAD_"
 
 // Metadata.Net SELECTOR
 #define selectorAddFavorite                             @"addFavorite"
@@ -231,6 +233,10 @@ extern NSString *const flowEndpoint;
 // Metadata : Status
 #define k_metadataStatusNormal                          0
 #define k_metadataStatusHide                            1
+#define k_metadataStatusInUpload                        2
+#define k_metadataStatusUploading                       3
+#define k_metadataStatusInDownload                      4
+#define k_metadataStatusDownloading                     5
 
 // TabBar button
 #define k_tabBarApplicationIndexFile                    0
@@ -260,6 +266,9 @@ extern NSString *const flowEndpoint;
 #define k_activityDebugActionUploadShare                @"Upload Share"
 #define k_activityDebugActionAutoUpload                 @"Auto Upload"
 #define k_activityDebugActionReadFolder                 @"Read Folder"
+#define k_activityDebugActionListingFavorites           @"Listing Favorites"
+#define k_activityDebugActionCreateFolder               @"Create Folder"
+#define k_activityDebugActionDeleteFileFolder           @"Delete File-Folder"
 #define k_activityDebugActionGetNotification            @"Get Notification Server"
 #define k_activityDebugActionPushProxy                  @"Subscribing Push Proxy"
 #define k_activityDebugActionServerPush                 @"Subscribing Server Push"
@@ -271,6 +280,10 @@ extern NSString *const flowEndpoint;
 
 // Flow Version
 #define k_flow_version_available                        12
+
+//
+#define k_DirectoryProviderStorage                      @"File Provider Storage"
+
 
 // -----------------------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------------------

@@ -197,8 +197,8 @@
     fixedSpaceMini.width = 25;
     
     _buttonModifyTxt = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"actionSheetModify"] style:UIBarButtonItemStylePlain target:self action:@selector(modifyTxtButtonPressed:)];
-    _buttonAction = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"actionSheetOpenIn"] style:UIBarButtonItemStylePlain target:self action:@selector(actionButtonPressed:)];
-    _buttonShare  = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"actionSheetShare"] style:UIBarButtonItemStylePlain target:self action:@selector(shareButtonPressed:)];
+    _buttonAction = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"openFile"] style:UIBarButtonItemStylePlain target:self action:@selector(actionButtonPressed:)];
+    _buttonShare  = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"share"] style:UIBarButtonItemStylePlain target:self action:@selector(shareButtonPressed:)];
     _buttonDelete = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemTrash target:self action:@selector(deleteButtonPressed:)];
     
     if ([_fileNameExtension isEqualToString:@"TXT"]) {
@@ -317,7 +317,7 @@
             [self.webView  loadHTMLString:[NSString stringWithFormat:@"<div style='font-size:%@;font-family:%@;'><pre>%@",@"20",@"Sans-Serif",dataFile] baseURL:nil];
         }
         
-    } else if ([_fileNameExtension isEqualToString:@"TXT"]) {
+    } else if ([_fileNameExtension isEqualToString:@"TXT"] || [_fileNameExtension isEqualToString:@"MD"]) {
         
         NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
         NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:nil delegateQueue:nil];
@@ -385,6 +385,9 @@
     self.photoBrowser.zoomPhotosToFill = NO;
     self.photoBrowser.autoPlayOnAppear = NO;
     self.photoBrowser.delayToHideElements = 15;
+    
+    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad)
+        self.photoBrowser.enableSwipeToDismiss = NO;
     
     if (self.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassCompact) {
         
@@ -864,10 +867,13 @@
 
 - (void)handleSwipeUpDown
 {
+    // REMOVE IT'S UNUSABLE
+    /*
     self.navigationController.navigationBarHidden = false;  // iOS App is unusable after swipe up or down with PDF in fullscreen #526
 
     [self removeAllView];
     [self.navigationController popViewControllerAnimated:YES];
+    */
 }
 
 #pragma --------------------------------------------------------------------------------------------

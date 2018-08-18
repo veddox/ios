@@ -94,6 +94,7 @@
 		F70022FE1EC4C9100080073F /* UtilsFramework.m in Sources */ = {isa = PBXBuildFile; fileRef = F70022A01EC4C9100080073F /* UtilsFramework.m */; };
 		F70022FF1EC4C9100080073F /* UtilsFramework.m in Sources */ = {isa = PBXBuildFile; fileRef = F70022A01EC4C9100080073F /* UtilsFramework.m */; };
 		F70023001EC4C9100080073F /* UtilsFramework.m in Sources */ = {isa = PBXBuildFile; fileRef = F70022A01EC4C9100080073F /* UtilsFramework.m */; };
+		F701E04320BC5B41004629E1 /* FileProviderExtension+Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = F701E04220BC5B41004629E1 /* FileProviderExtension+Network.swift */; };
 		F70944BD1F86364000AE4541 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F70944BC1F86364000AE4541 /* MainInterface.storyboard */; };
 		F70A630B1D5B3467004E2AA5 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F70A63061D5B3467004E2AA5 /* libcrypto.a */; };
 		F70A630F1D5B3467004E2AA5 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F70A63071D5B3467004E2AA5 /* libssl.a */; };
@@ -208,7 +209,6 @@
 		F73D71641F2674A400E233EB /* NCText.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F73D71631F2674A400E233EB /* NCText.storyboard */; };
 		F73F537F1E929C8500F8678D /* CCMore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73F537E1E929C8500F8678D /* CCMore.swift */; };
 		F74344171E1264EE001CC831 /* DocumentPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74344161E1264EE001CC831 /* DocumentPickerViewController.swift */; };
-		F74344251E1264EE001CC831 /* FileProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74344241E1264EE001CC831 /* FileProvider.swift */; };
 		F74344561E12784A001CC831 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F70A63061D5B3467004E2AA5 /* libcrypto.a */; };
 		F74344591E12786C001CC831 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F70A63071D5B3467004E2AA5 /* libssl.a */; };
 		F74344631E127D79001CC831 /* CCBKPasscode.m in Sources */ = {isa = PBXBuildFile; fileRef = F7FE125D1BAC03FB0041924B /* CCBKPasscode.m */; };
@@ -225,14 +225,20 @@
 		F743448A1E127FF2001CC831 /* CCHud.m in Sources */ = {isa = PBXBuildFile; fileRef = F7514EDB1C7B1336008F3338 /* CCHud.m */; };
 		F74344921E128EB0001CC831 /* Picker.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F74344901E128E8F001CC831 /* Picker.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F74344931E128EB4001CC831 /* PickerFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F74344911E128E96001CC831 /* PickerFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F7496B7D208F548E004B299C /* FileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7496B7B208F548E004B299C /* FileProviderEnumerator.swift */; };
+		F7496B7E208F548E004B299C /* FileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7496B7C208F548E004B299C /* FileProviderItem.swift */; };
 		F749E4E91DC1FB38009BA2FD /* Share.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F7CE8AFB1DC1F8D8009CAE48 /* Share.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F74E432620B5547700C2E54C /* NCNetworkingEndToEnd.m in Sources */ = {isa = PBXBuildFile; fileRef = F74E432520B5547700C2E54C /* NCNetworkingEndToEnd.m */; };
+		F74E432720B5547700C2E54C /* NCNetworkingEndToEnd.m in Sources */ = {isa = PBXBuildFile; fileRef = F74E432520B5547700C2E54C /* NCNetworkingEndToEnd.m */; };
+		F74E432820B5547700C2E54C /* NCNetworkingEndToEnd.m in Sources */ = {isa = PBXBuildFile; fileRef = F74E432520B5547700C2E54C /* NCNetworkingEndToEnd.m */; };
+		F74E432920B5547700C2E54C /* NCNetworkingEndToEnd.m in Sources */ = {isa = PBXBuildFile; fileRef = F74E432520B5547700C2E54C /* NCNetworkingEndToEnd.m */; };
+		F74F9F5020BC3678009FB1AF /* FileProviderData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74F9F4F20BC3678009FB1AF /* FileProviderData.swift */; };
+		F74F9F5220BC3681009FB1AF /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74F9F5120BC3681009FB1AF /* FileProviderExtension.swift */; };
+		F74F9F5420BC3D7E009FB1AF /* FileProviderExtension+Actions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74F9F5320BC3D7E009FB1AF /* FileProviderExtension+Actions.swift */; };
+		F74F9F5620BC3E52009FB1AF /* FileProviderExtension+Thumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74F9F5520BC3E52009FB1AF /* FileProviderExtension+Thumbnail.swift */; };
 		F750374D1DBFA91A008FB480 /* ALView+PureLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = F75037441DBFA91A008FB480 /* ALView+PureLayout.m */; };
 		F750374F1DBFA91A008FB480 /* NSArray+PureLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = F75037461DBFA91A008FB480 /* NSArray+PureLayout.m */; };
 		F75037511DBFA91A008FB480 /* NSLayoutConstraint+PureLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = F75037481DBFA91A008FB480 /* NSLayoutConstraint+PureLayout.m */; };
-		F75131631FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */ = {isa = PBXBuildFile; fileRef = F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */; };
-		F75131641FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */ = {isa = PBXBuildFile; fileRef = F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */; };
-		F75131651FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */ = {isa = PBXBuildFile; fileRef = F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */; };
-		F75131661FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */ = {isa = PBXBuildFile; fileRef = F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */; };
 		F755BD9B20594AC7008C5FBB /* NCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F755BD9A20594AC7008C5FBB /* NCService.swift */; };
 		F75797AE1E81356C00187A1B /* CTAssetsPicker.strings in Resources */ = {isa = PBXBuildFile; fileRef = F75797AC1E81356C00187A1B /* CTAssetsPicker.strings */; };
 		F75AC2431F1F62450073EC19 /* NCManageAutoUploadFileName.swift in Sources */ = {isa = PBXBuildFile; fileRef = F75AC2421F1F62450073EC19 /* NCManageAutoUploadFileName.swift */; };
@@ -366,8 +372,6 @@
 		F78964AF1EBB576C00403E13 /* JDStatusBarView.m in Sources */ = {isa = PBXBuildFile; fileRef = F78964AC1EBB576C00403E13 /* JDStatusBarView.m */; };
 		F78BFEE11D31126B00E513CF /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F78BFEDE1D31126B00E513CF /* MainInterface.storyboard */; };
 		F7A321551E9E2A070069AD1B /* CCFavorites.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A3214F1E9E2A070069AD1B /* CCFavorites.m */; };
-		F7A321561E9E2A070069AD1B /* CCFavoritesCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A321511E9E2A070069AD1B /* CCFavoritesCell.m */; };
-		F7A321571E9E2A070069AD1B /* CCFavoritesCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = F7A321521E9E2A070069AD1B /* CCFavoritesCell.xib */; };
 		F7A321651E9E37960069AD1B /* CCActivity.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A321641E9E37960069AD1B /* CCActivity.m */; };
 		F7A321791E9E3EAF0069AD1B /* CCTransfers.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A321751E9E3EAF0069AD1B /* CCTransfers.m */; };
 		F7A3217A1E9E3EAF0069AD1B /* CCTransfersCell.m in Sources */ = {isa = PBXBuildFile; fileRef = F7A321771E9E3EAF0069AD1B /* CCTransfersCell.m */; };
@@ -737,6 +741,7 @@
 		F700229E1EC4C9100080073F /* OCConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OCConstants.h; sourceTree = "<group>"; };
 		F700229F1EC4C9100080073F /* UtilsFramework.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UtilsFramework.h; sourceTree = "<group>"; };
 		F70022A01EC4C9100080073F /* UtilsFramework.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UtilsFramework.m; sourceTree = "<group>"; };
+		F701E04220BC5B41004629E1 /* FileProviderExtension+Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileProviderExtension+Network.swift"; sourceTree = "<group>"; };
 		F70211F51BAC56E9003FC03E /* CCCellMain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCCellMain.m; sourceTree = "<group>"; };
 		F70211F61BAC56E9003FC03E /* CCCellMain.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CCCellMain.xib; sourceTree = "<group>"; };
 		F70211F71BAC56E9003FC03E /* CCCellMainTransfer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCCellMainTransfer.h; sourceTree = "<group>"; };
@@ -914,13 +919,24 @@
 		F73D71631F2674A400E233EB /* NCText.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = NCText.storyboard; sourceTree = "<group>"; };
 		F73F537E1E929C8500F8678D /* CCMore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CCMore.swift; sourceTree = "<group>"; };
 		F74344161E1264EE001CC831 /* DocumentPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentPickerViewController.swift; sourceTree = "<group>"; };
-		F74344241E1264EE001CC831 /* FileProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProvider.swift; sourceTree = "<group>"; };
 		F74344901E128E8F001CC831 /* Picker.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Picker.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F74344911E128E96001CC831 /* PickerFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PickerFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F743B2C31C95BBE8006F5B4A /* CCShareInfoCMOC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCShareInfoCMOC.h; sourceTree = "<group>"; };
 		F743B2C41C95BBE8006F5B4A /* CCShareInfoCMOC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCShareInfoCMOC.m; sourceTree = "<group>"; };
+		F7496B7B208F548E004B299C /* FileProviderEnumerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderEnumerator.swift; sourceTree = "<group>"; };
+		F7496B7C208F548E004B299C /* FileProviderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderItem.swift; sourceTree = "<group>"; };
+		F7496B80208F5651004B299C /* Picker.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Picker.plist; sourceTree = "<group>"; };
+		F7496B81208F5651004B299C /* iOSClient.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = iOSClient.plist; sourceTree = "<group>"; };
+		F7496B82208F5652004B299C /* PickerFileProvider.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PickerFileProvider.plist; sourceTree = "<group>"; };
+		F7496B83208F5652004B299C /* Share.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Share.plist; sourceTree = "<group>"; };
 		F74D3DBD1BAC1941000BAE4B /* OCNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OCNetworking.h; sourceTree = "<group>"; };
 		F74D3DBE1BAC1941000BAE4B /* OCNetworking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = OCNetworking.m; sourceTree = "<group>"; };
+		F74E432420B5547700C2E54C /* NCNetworkingEndToEnd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NCNetworkingEndToEnd.h; sourceTree = "<group>"; };
+		F74E432520B5547700C2E54C /* NCNetworkingEndToEnd.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NCNetworkingEndToEnd.m; sourceTree = "<group>"; };
+		F74F9F4F20BC3678009FB1AF /* FileProviderData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderData.swift; sourceTree = "<group>"; };
+		F74F9F5120BC3681009FB1AF /* FileProviderExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderExtension.swift; sourceTree = "<group>"; };
+		F74F9F5320BC3D7E009FB1AF /* FileProviderExtension+Actions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileProviderExtension+Actions.swift"; sourceTree = "<group>"; };
+		F74F9F5520BC3E52009FB1AF /* FileProviderExtension+Thumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileProviderExtension+Thumbnail.swift"; sourceTree = "<group>"; };
 		F75037431DBFA91A008FB480 /* ALView+PureLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "ALView+PureLayout.h"; sourceTree = "<group>"; };
 		F75037441DBFA91A008FB480 /* ALView+PureLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ALView+PureLayout.m"; sourceTree = "<group>"; };
 		F75037451DBFA91A008FB480 /* NSArray+PureLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+PureLayout.h"; sourceTree = "<group>"; };
@@ -930,8 +946,6 @@
 		F75037491DBFA91A008FB480 /* PureLayout+Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "PureLayout+Internal.h"; sourceTree = "<group>"; };
 		F750374A1DBFA91A008FB480 /* PureLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PureLayout.h; sourceTree = "<group>"; };
 		F750374B1DBFA91A008FB480 /* PureLayoutDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PureLayoutDefines.h; sourceTree = "<group>"; };
-		F75131611FA5EFF4002BB4D1 /* NCNetworkingSync.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NCNetworkingSync.h; sourceTree = "<group>"; };
-		F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NCNetworkingSync.m; sourceTree = "<group>"; };
 		F7514EDA1C7B1336008F3338 /* CCHud.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCHud.h; sourceTree = "<group>"; };
 		F7514EDB1C7B1336008F3338 /* CCHud.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCHud.m; sourceTree = "<group>"; };
 		F7540EE21D5B238600C3FFA8 /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
@@ -1323,9 +1337,6 @@
 		F7956FCB1B4886E60085DEA3 /* CCUploadFromOtherUpp.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = CCUploadFromOtherUpp.storyboard; sourceTree = "<group>"; };
 		F7A3214E1E9E2A070069AD1B /* CCFavorites.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCFavorites.h; sourceTree = "<group>"; };
 		F7A3214F1E9E2A070069AD1B /* CCFavorites.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = CCFavorites.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		F7A321501E9E2A070069AD1B /* CCFavoritesCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCFavoritesCell.h; sourceTree = "<group>"; };
-		F7A321511E9E2A070069AD1B /* CCFavoritesCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CCFavoritesCell.m; sourceTree = "<group>"; };
-		F7A321521E9E2A070069AD1B /* CCFavoritesCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = CCFavoritesCell.xib; sourceTree = "<group>"; };
 		F7A321631E9E37960069AD1B /* CCActivity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCActivity.h; sourceTree = "<group>"; };
 		F7A321641E9E37960069AD1B /* CCActivity.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = CCActivity.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F7A321741E9E3EAF0069AD1B /* CCTransfers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CCTransfers.h; sourceTree = "<group>"; };
@@ -2150,8 +2161,14 @@
 		F74344211E1264EE001CC831 /* PickerFileProvider */ = {
 			isa = PBXGroup;
 			children = (
+				F74F9F5120BC3681009FB1AF /* FileProviderExtension.swift */,
+				F701E04220BC5B41004629E1 /* FileProviderExtension+Network.swift */,
+				F74F9F5320BC3D7E009FB1AF /* FileProviderExtension+Actions.swift */,
+				F74F9F5520BC3E52009FB1AF /* FileProviderExtension+Thumbnail.swift */,
+				F74F9F4F20BC3678009FB1AF /* FileProviderData.swift */,
+				F7496B7B208F548E004B299C /* FileProviderEnumerator.swift */,
+				F7496B7C208F548E004B299C /* FileProviderItem.swift */,
 				F7F54CAB1E5AFF1E00E19C62 /* PickerFileProvider-Bridging-Header.h */,
-				F74344241E1264EE001CC831 /* FileProvider.swift */,
 			);
 			path = PickerFileProvider;
 			sourceTree = "<group>";
@@ -2164,8 +2181,8 @@
 				F732BA041D76CE1500E9878B /* CCNetworking.m */,
 				F74D3DBD1BAC1941000BAE4B /* OCNetworking.h */,
 				F74D3DBE1BAC1941000BAE4B /* OCNetworking.m */,
-				F75131611FA5EFF4002BB4D1 /* NCNetworkingSync.h */,
-				F75131621FA5EFF4002BB4D1 /* NCNetworkingSync.m */,
+				F74E432420B5547700C2E54C /* NCNetworkingEndToEnd.h */,
+				F74E432520B5547700C2E54C /* NCNetworkingEndToEnd.m */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -2518,9 +2535,6 @@
 			children = (
 				F7A3214E1E9E2A070069AD1B /* CCFavorites.h */,
 				F7A3214F1E9E2A070069AD1B /* CCFavorites.m */,
-				F7A321501E9E2A070069AD1B /* CCFavoritesCell.h */,
-				F7A321511E9E2A070069AD1B /* CCFavoritesCell.m */,
-				F7A321521E9E2A070069AD1B /* CCFavoritesCell.xib */,
 			);
 			path = Favorites;
 			sourceTree = "<group>";
@@ -2772,6 +2786,10 @@
 				F7C742E61E7BD71A00D9C973 /* PickerFileProvider.entitlements */,
 				F7C742D01E7BD35B00D9C973 /* Share.entitlements */,
 				F7C742D41E7BD44400D9C973 /* Picker.entitlements */,
+				F7496B81208F5651004B299C /* iOSClient.plist */,
+				F7496B80208F5651004B299C /* Picker.plist */,
+				F7496B82208F5652004B299C /* PickerFileProvider.plist */,
+				F7496B83208F5652004B299C /* Share.plist */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -3521,7 +3539,6 @@
 				F73B4F151F470D9100BBEE4B /* symbols.cmake in Resources */,
 				F7F54CF21E5B14C700E19C62 /* ImageSelectedSmallOn@2x.png in Resources */,
 				F7D4233A1F0596AC009C9782 /* Reader-Button-H@3x.png in Resources */,
-				F7A321571E9E2A070069AD1B /* CCFavoritesCell.xib in Resources */,
 				F7D423341F0596AC009C9782 /* AppIcon-120.png in Resources */,
 				F7D4234F1F0596AC009C9782 /* Reader-Thumbs@3x.png in Resources */,
 				F7F54CE51E5B14C700E19C62 /* ImageError.png in Resources */,
@@ -3624,6 +3641,7 @@
 				F71459C91D12E3B700CAFEEC /* OCNetworking.m in Sources */,
 				F71459CD1D12E3B700CAFEEC /* AFViewShaker.m in Sources */,
 				F70022E11EC4C9100080073F /* OCXMLListParser.m in Sources */,
+				F74E432720B5547700C2E54C /* NCNetworkingEndToEnd.m in Sources */,
 				F73CC0791E813DFF006E3047 /* BKShiftingView.m in Sources */,
 				F71459D21D12E3B700CAFEEC /* CCUtility.m in Sources */,
 				F71459D31D12E3B700CAFEEC /* CCBKPasscode.m in Sources */,
@@ -3642,7 +3660,6 @@
 				F70022C91EC4C9100080073F /* OCRichObjectStrings.m in Sources */,
 				F71459F11D12E3B700CAFEEC /* CCMove.m in Sources */,
 				F70022C31EC4C9100080073F /* OCNotifications.m in Sources */,
-				F75131641FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */,
 				F71459F71D12E3B700CAFEEC /* CCGraphics.m in Sources */,
 				F7BAADC91ED5A87C00B7EAD4 /* NCDatabase.swift in Sources */,
 				F70022BD1EC4C9100080073F /* OCExternalSites.m in Sources */,
@@ -3678,6 +3695,7 @@
 				F70023001EC4C9100080073F /* UtilsFramework.m in Sources */,
 				F73CC07A1E813DFF006E3047 /* BKShiftingView.m in Sources */,
 				F70022C11EC4C9100080073F /* OCFileDto.m in Sources */,
+				F74E432820B5547700C2E54C /* NCNetworkingEndToEnd.m in Sources */,
 				F70022EE1EC4C9100080073F /* OCXMLSharedParser.m in Sources */,
 				F70022C41EC4C9100080073F /* OCNotifications.m in Sources */,
 				F74344821E127F68001CC831 /* MBProgressHUD.m in Sources */,
@@ -3692,7 +3710,6 @@
 				F73CC0741E813DFF006E3047 /* BKPasscodeLockScreenManager.m in Sources */,
 				F77EB62B1EC0B50B003F814F /* CCCertificate.m in Sources */,
 				F7E718B01EB0FBE700FA58C9 /* CCGraphics.m in Sources */,
-				F75131651FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */,
 				F74344171E1264EE001CC831 /* DocumentPickerViewController.swift in Sources */,
 				F70022D61EC4C9100080073F /* NSDate+ISO8601.m in Sources */,
 				F74344811E127F49001CC831 /* AFViewShaker.m in Sources */,
@@ -3737,6 +3754,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F7BB50D91F2238A300C47094 /* OCXMLParser.m in Sources */,
+				F74F9F5220BC3681009FB1AF /* FileProviderExtension.swift in Sources */,
 				F7BB50D11F22388900C47094 /* OCSharedDto.m in Sources */,
 				F7BB50CB1F22386900C47094 /* OCCommunication.m in Sources */,
 				F7BB50D31F22388E00C47094 /* OCUserProfile.m in Sources */,
@@ -3745,6 +3763,7 @@
 				F7BB50CA1F22386700C47094 /* OCCapabilities.m in Sources */,
 				F7BB50CE1F22388000C47094 /* OCNotifications.m in Sources */,
 				F7BB50CC1F22387900C47094 /* OCExternalSites.m in Sources */,
+				F74F9F5620BC3E52009FB1AF /* FileProviderExtension+Thumbnail.swift in Sources */,
 				F7BB50EA1F2238FB00C47094 /* UIScrollView+EmptyDataSet.m in Sources */,
 				F7F878B11FB9E3B900599E4F /* NCEndToEndMetadata.swift in Sources */,
 				F7BB50F71F2239BF00C47094 /* BKPasscodeLockScreenManager.m in Sources */,
@@ -3753,17 +3772,21 @@
 				F7BB50BC1F22375D00C47094 /* CCBKPasscode.m in Sources */,
 				F7BB50D81F2238A000C47094 /* OCXMLListParser.m in Sources */,
 				F7BB50E41F2238D500C47094 /* AFURLSessionManager.m in Sources */,
+				F74F9F5420BC3D7E009FB1AF /* FileProviderExtension+Actions.swift in Sources */,
 				F7BB50F91F2239C800C47094 /* BKShiftingView.m in Sources */,
 				F7BB50F21F22395D00C47094 /* UICKeyChainStore.m in Sources */,
+				F7496B7E208F548E004B299C /* FileProviderItem.swift in Sources */,
 				F7BB50D01F22388600C47094 /* OCRichObjectStrings.m in Sources */,
 				F7BB50C91F22386400C47094 /* OCActivity.m in Sources */,
+				F701E04320BC5B41004629E1 /* FileProviderExtension+Network.swift in Sources */,
 				F7BB50AF1F22370300C47094 /* NCManageDatabase.swift in Sources */,
 				F7BB50FA1F2239CB00C47094 /* BKTouchIDManager.m in Sources */,
 				F7BB50BB1F22374E00C47094 /* OCNetworking.m in Sources */,
+				F74E432920B5547700C2E54C /* NCNetworkingEndToEnd.m in Sources */,
 				F7BB50C11F22378E00C47094 /* CCHud.m in Sources */,
 				F7BB50DE1F2238B700C47094 /* UtilsFramework.m in Sources */,
+				F7496B7D208F548E004B299C /* FileProviderEnumerator.swift in Sources */,
 				F7BB50D61F22389900C47094 /* OCHTTPRequestOperation.m in Sources */,
-				F75131661FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */,
 				F7BB50BD1F22376000C47094 /* CCCertificate.m in Sources */,
 				F7BB50DA1F2238A600C47094 /* OCXMLServerErrorsParser.m in Sources */,
 				F7BB50C51F22379B00C47094 /* NSNotificationCenter+MainThread.m in Sources */,
@@ -3771,7 +3794,6 @@
 				F7BB50C01F22378B00C47094 /* CCError.m in Sources */,
 				F7BB50E01F2238CA00C47094 /* AFNetworkReachabilityManager.m in Sources */,
 				F7BB50F81F2239C400C47094 /* BKPasscodeViewController.m in Sources */,
-				F74344251E1264EE001CC831 /* FileProvider.swift in Sources */,
 				F7BB50BA1F22374A00C47094 /* CCNetworking.m in Sources */,
 				F7BB50DD1F2238B100C47094 /* NSString+Encode.m in Sources */,
 				F7BB50D51F22389600C47094 /* NSDate+RFC1123.m in Sources */,
@@ -3787,6 +3809,7 @@
 				F7BB50F41F2239B600C47094 /* BKPasscodeDummyViewController.m in Sources */,
 				F7BB50C41F22379800C47094 /* NSString+TruncateToWidth.m in Sources */,
 				F7BB50E31F2238D200C47094 /* AFURLResponseSerialization.m in Sources */,
+				F74F9F5020BC3678009FB1AF /* FileProviderData.swift in Sources */,
 				F782952F1F962EF900A572F5 /* NCEndToEndEncryption.m in Sources */,
 				F7BB50EB1F22391000C47094 /* MBProgressHUD.m in Sources */,
 				F7BB50D21F22388B00C47094 /* OCShareUser.m in Sources */,
@@ -3931,7 +3954,6 @@
 				F7B4F1CB1F44356F00B53B42 /* NCUchardet.m in Sources */,
 				F73B4EFB1F470D9100BBEE4B /* LangGermanModel.cpp in Sources */,
 				F73B4F061F470D9100BBEE4B /* nsEscCharsetProber.cpp in Sources */,
-				F7A321561E9E2A070069AD1B /* CCFavoritesCell.m in Sources */,
 				F7D4237D1F0596C6009C9782 /* ReaderContentView.m in Sources */,
 				F73B4EFA1F470D9100BBEE4B /* LangFrenchModel.cpp in Sources */,
 				F7D4245D1F063B82009C9782 /* CTAssetCollectionViewCell.m in Sources */,
@@ -3985,7 +4007,6 @@
 				F7B1FBC81E72E3D1001781FE /* SwiftWebVCActivity.swift in Sources */,
 				F7D424741F063B82009C9782 /* CTAssetThumbnailView.m in Sources */,
 				F77B0E981D118A16002130FE /* CCManageAccount.m in Sources */,
-				F75131631FA5EFF4002BB4D1 /* NCNetworkingSync.m in Sources */,
 				F762CB011EACB66200B38484 /* XLFormSelectorCell.m in Sources */,
 				F755BD9B20594AC7008C5FBB /* NCService.swift in Sources */,
 				F70022AD1EC4C9100080073F /* AFURLResponseSerialization.m in Sources */,
@@ -4059,6 +4080,7 @@
 				F70022AA1EC4C9100080073F /* AFURLRequestSerialization.m in Sources */,
 				F7D423851F0596C6009C9782 /* ReaderThumbRender.m in Sources */,
 				F72AAECA1E5C60C700BB17E1 /* AHKActionSheet.m in Sources */,
+				F74E432620B5547700C2E54C /* NCNetworkingEndToEnd.m in Sources */,
 				F73B4F141F470D9100BBEE4B /* nsUTF8Prober.cpp in Sources */,
 				F70022C81EC4C9100080073F /* OCRichObjectStrings.m in Sources */,
 				F7D423841F0596C6009C9782 /* ReaderThumbQueue.m in Sources */,

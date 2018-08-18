@@ -47,22 +47,23 @@
 
 - (void)settingAccount;
 
-// Sessions - Task
+// Sessions
 - (OCCommunication *)sharedOCCommunication;
+- (OCCommunication *)sharedOCCommunicationExtensionDownload;
+
 - (NSURLSession *)getSessionfromSessionDescription:(NSString *)sessionDescription;
+- (NSArray *)getUploadTasksExtensionSession;
 
 - (void)invalidateAndCancelAllSession;
 - (void)settingSessionsDownload:(BOOL)download upload:(BOOL)upload taskStatus:(NSInteger)taskStatus activeAccount:(NSString *)activeAccount activeUser:(NSString *)activeUser activeUrl:(NSString *)activeUrl;
-- (void)settingSession:(NSString *)sessionDescription sessionTaskIdentifier:(NSUInteger)sessionTaskIdentifier taskStatus:(NSInteger)taskStatus;
 
 // Download
 - (void)downloadFile:(NSString *)fileName fileID:(NSString *)fileID serverUrl:(NSString *)serverUrl selector:(NSString *)selector selectorPost:(NSString *)selectorPost session:(NSString *)session taskStatus:(NSInteger)taskStatus delegate:(id)delegate;
 
 // Upload
 - (void)uploadFileFromAssetLocalIdentifier:(CCMetadataNet *)metadataNet delegate:(id)delegate;
-
-- (void)uploadFile:(NSString *)fileName serverUrl:(NSString *)serverUrl session:(NSString *)session taskStatus:(NSInteger)taskStatus selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorCode:(NSInteger)errorCode delegate:(id)delegate;
-- (void)uploadFileMetadata:(tableMetadata *)metadata taskStatus:(NSInteger)taskStatus;
+- (void)uploadFile:(NSString *)fileName serverUrl:(NSString *)serverUrl assetLocalIdentifier:(NSString *)assetLocalIdentifier path:(NSString *)path session:(NSString *)session taskStatus:(NSInteger)taskStatus selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorCode:(NSInteger)errorCode delegate:(id)delegate;
+- (void)uploadFileMetadata:(tableMetadata *)metadata taskStatus:(NSInteger)taskStatus delegate:(id)delegate;
 
 // Utility
 
@@ -75,15 +76,16 @@
 
 @optional - (void)reloadDatasource:(NSString *)serverUrl;
 
-- (void)downloadFileSuccessFailure:(NSString *)fileName fileID:(NSString *)fileID serverUrl:(NSString *)serverUrl selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorMessage:(NSString *)errorMessage errorCode:(NSInteger)errorCode;
-- (void)uploadFileSuccessFailure:(NSString *)fileName fileID:(NSString *)fileID assetLocalIdentifier:(NSString *)assetLocalIdentifier serverUrl:(NSString *)serverUrl selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorMessage:(NSString *)errorMessage errorCode:(NSInteger)errorCode;
+@optional  - (void)downloadFileSuccessFailure:(NSString *)fileName fileID:(NSString *)fileID serverUrl:(NSString *)serverUrl selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorMessage:(NSString *)errorMessage errorCode:(NSInteger)errorCode;
+
+@optional - (void)uploadStart:(NSString *)fileID task:(NSURLSessionUploadTask *)task serverUrl:(NSString *)serverUrl;
+@optional - (void)uploadFileSuccessFailure:(NSString *)fileName fileID:(NSString *)fileID assetLocalIdentifier:(NSString *)assetLocalIdentifier serverUrl:(NSString *)serverUrl selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorMessage:(NSString *)errorMessage errorCode:(NSInteger)errorCode;
 
 @end
 
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark =====  CCMetadataNet =====
 #pragma --------------------------------------------------------------------------------------------
-
 
 @interface CCMetadataNet : NSObject <NSCopying>
 
@@ -110,23 +112,24 @@
 @property (nonatomic, strong) NSString *keyCipher;
 @property (nonatomic, strong) id options;
 @property (nonatomic, strong) NSString *password;
-@property (nonatomic, strong) NSString *pathFolder;
+@property (nonatomic, strong) NSString *path;
 @property NSInteger priority;
 @property (nonatomic, strong) NSString *serverUrl;
 @property (nonatomic, strong) NSString *serverUrlTo;
 @property (nonatomic, strong) NSString *selector;
 @property (nonatomic, strong) NSString *selectorPost;
 @property (nonatomic, strong) NSString *session;
+@property (nonatomic, strong) NSString *sessionError;
 @property (nonatomic, strong) NSString *sessionID;
+@property NSInteger sessionTaskIdentifier;
 @property (nonatomic, strong) NSString *share;
 @property NSInteger shareeType;
 @property NSInteger sharePermission;
-@property long size;
+@property double size;
+@property (nonatomic, strong) NSURLSessionTask *task;
 @property NSInteger taskStatus;
 
 - (id)initWithAccount:(NSString *)withAccount;
 - (id)copyWithZone:(NSZone *)zone;
 
 @end
-
-

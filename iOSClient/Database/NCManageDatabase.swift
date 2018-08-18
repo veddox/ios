@@ -57,7 +57,7 @@ class NCManageDatabase: NSObject {
         let config = Realm.Configuration(
         
             fileURL: dirGroup?.appendingPathComponent("\(appDatabaseNextcloud)/\(k_databaseDefault)"),
-            schemaVersion: 19,
+            schemaVersion: 24,
             
             // 10 : Version 2.18.0
             // 11 : Version 2.18.2
@@ -69,6 +69,11 @@ class NCManageDatabase: NSObject {
             // 17 : Version 2.20.4
             // 18 : Version 2.20.6
             // 19 : Version 2.20.7
+            // 20 : Version 2.21.0
+            // 21 : Version 2.21.0.3
+            // 22 : Version 2.21.0.9
+            // 23 : Version 2.21.0.15
+            // 24 : Version 2.21.2.5
             
             migrationBlock: { migration, oldSchemaVersion in
                 // We haven’t migrated anything yet, so oldSchemaVersion == 0
@@ -786,7 +791,7 @@ class NCManageDatabase: NSObject {
             return nil
         }
         
-        var result :tableDirectory?
+        var result: tableDirectory?
         let realm = try! Realm()
 
         do {
@@ -1445,7 +1450,7 @@ class NCManageDatabase: NSObject {
         }
     }
     
-    @objc func setLocalFile(fileID: String, date: NSDate?, exifDate: NSDate?, exifLatitude: String?, exifLongitude: String?, fileName: String?) {
+    @objc func setLocalFile(fileID: String, date: NSDate?, exifDate: NSDate?, exifLatitude: String?, exifLongitude: String?, fileName: String?, etag: String?, etagFPE: String?) {
         
         guard self.getAccountActive() != nil else {
             return
@@ -1475,6 +1480,12 @@ class NCManageDatabase: NSObject {
                 }
                 if let fileName = fileName {
                     result.fileName = fileName
+                }
+                if let etag = etag {
+                    result.etag = etag
+                }
+                if let etagFPE = etagFPE {
+                    result.etagFPE = etagFPE
                 }
             }
         } catch let error {
@@ -1621,6 +1632,38 @@ class NCManageDatabase: NSObject {
         
         self.setDateReadDirectory(directoryID: directoryID)
         self.setDateReadDirectory(directoryID: directoryIDTo)
+    }
+    
+    @objc func renameMetadata(fileNameTo: String, fileID: String) -> tableMetadata? {
+        
+        guard let tableAccount = self.getAccountActive() else {
+            return nil
+        }
+        
+        var result :tableMetadata?
+        let realm = try! Realm()
+        
+        do {
+            try realm.write {
+                
+                result = realm.objects(tableMetadata.self).filter("account = %@ AND fileID = %@", tableAccount.account, fileID).first
+                if result != nil {
+                                        
+                    result!.fileName = fileNameTo
+                    result!.fileNameView = fileNameTo
+                }
+            }
+        } catch let error {
+            print("[LOG] Could not write to database: ", error)
+            return nil
+        }
+        
+        if result == nil {
+            return nil
+        }
+        
+        self.setDateReadDirectory(directoryID: result!.directoryID)
+        return tableMetadata.init(value: result!)
     }
     
     @objc func updateMetadata(_ metadata: tableMetadata) -> tableMetadata? {
@@ -1850,7 +1893,7 @@ class NCManageDatabase: NSObject {
         }
     }
     
-    @objc func getMetadataFromFileName(_ fileName: String, directoryID: String) -> tableMetadata? {
+    @objc func getMetadataInSessionFromFileName(_ fileName: String, directoryID: String) -> tableMetadata? {
         
         guard let tableAccount = self.getAccountActive() else {
             return nil
@@ -1859,7 +1902,7 @@ class NCManageDatabase: NSObject {
         let realm = try! Realm()
         realm.refresh()
         
-        guard let result = realm.objects(tableMetadata.self).filter("account = %@ AND directoryID = %@ AND fileName = %@", tableAccount.account, directoryID, fileName).first else {
+        guard let result = realm.objects(tableMetadata.self).filter("account = %@ AND directoryID = %@ AND fileName = %@ AND session != ''", tableAccount.account, directoryID, fileName).first else {
             return nil
         }
         
@@ -1933,6 +1976,29 @@ class NCManageDatabase: NSObject {
             
             return Array(metadatas.map { tableMetadata.init(value:$0) })
         }
+    }
+    
+    @objc func getTableMetadatasDirectoryFavoriteIdentifierRank() -> [String:NSNumber] {
+        
+        var listIdentifierRank = [String:NSNumber]()
+
+        guard let tableAccount = self.getAccountActive() else {
+            return listIdentifierRank
+        }
+        
+        let realm = try! Realm()
+        realm.refresh()
+        
+        var counter = 10 as Int64
+        
+        let results = realm.objects(tableMetadata.self).filter("account = %@ AND directory = true AND favorite = true", tableAccount.account).sorted(byKeyPath: "fileNameView", ascending: true)
+        
+        for result in results {
+            counter += 1
+            listIdentifierRank[result.fileID] = NSNumber(value: Int64(counter))
+        }
+        
+        return listIdentifierRank
     }
     
     @objc func updateTableMetadatasContentTypeImageVideo(_ metadatas: [tableMetadata], startDirectory: String, activeUrl: String) -> Bool {
@@ -2181,18 +2247,19 @@ class NCManageDatabase: NSObject {
     //MARK: -
     //MARK: Table Queue Upload
     
-    @objc func addQueueUpload(metadataNet: CCMetadataNet) -> Bool {
+    @objc func addQueueUpload(metadataNet: CCMetadataNet) -> tableQueueUpload? {
         
         guard let tableAccount = self.getAccountActive() else {
-            return false
+            return nil
         }
         
+        var addObject :tableQueueUpload?
         let realm = try! Realm()
 
         if realm.isInWriteTransaction {
             
             print("[LOG] Could not write to database, addQueueUpload is already in write transaction")
-            return false
+            return nil
             
         } else {
             
@@ -2202,30 +2269,44 @@ class NCManageDatabase: NSObject {
                     if realm.objects(tableQueueUpload.self).filter("account = %@ AND assetLocalIdentifier = %@ AND selector = %@", tableAccount.account, metadataNet.assetLocalIdentifier, metadataNet.selector).first == nil {
                         
                         // Add new
-                        let addObject = tableQueueUpload()
+                        addObject = tableQueueUpload()
                         
-                        addObject.account = tableAccount.account
-                        addObject.assetLocalIdentifier = metadataNet.assetLocalIdentifier
-                        addObject.fileName = metadataNet.fileName
-                        addObject.selector = metadataNet.selector
+                        addObject!.account = tableAccount.account
+                        addObject!.assetLocalIdentifier = metadataNet.assetLocalIdentifier
+                        addObject!.errorCode = metadataNet.errorCode
+                        addObject!.fileName = metadataNet.fileName
+                        addObject!.fileNameView = metadataNet.fileName
+                        if let fileNameView = metadataNet.fileNameView {
+                            addObject!.fileNameView = fileNameView
+                        }
+                        addObject!.path = metadataNet.path
+                        addObject!.selector = metadataNet.selector
                         
                         if let selectorPost = metadataNet.selectorPost {
-                            addObject.selectorPost = selectorPost
+                            addObject!.selectorPost = selectorPost
                         }
                         
-                        addObject.serverUrl = metadataNet.serverUrl
-                        addObject.session = metadataNet.session
+                        addObject!.serverUrl = metadataNet.serverUrl
+                        addObject!.session = metadataNet.session
+                        addObject!.sessionError = metadataNet.sessionError
+                        addObject!.sessionID = metadataNet.sessionID
+                        addObject!.sessionTaskIdentifier = metadataNet.sessionTaskIdentifier
+                        addObject!.size = metadataNet.size
                         
-                        realm.add(addObject)
-                    }
+                        realm.add(addObject!)
+                    } else {}
                 }
             } catch let error {
                 print("[LOG] Could not write to database: ", error)
-                return false
+                return nil
             }
         }
         
-        return true
+        if addObject != nil {
+            return tableQueueUpload.init(value: addObject!)
+        } else {
+            return nil
+        }
     }
     
     @objc func addQueueUpload(metadatasNet: [CCMetadataNet]) {
@@ -2248,7 +2329,13 @@ class NCManageDatabase: NSObject {
                         
                         addObject.account = tableAccount.account
                         addObject.assetLocalIdentifier = metadataNet.assetLocalIdentifier
+                        addObject.errorCode = metadataNet.errorCode
                         addObject.fileName = metadataNet.fileName
+                        addObject.fileNameView = metadataNet.fileName
+                        if let fileNameView = metadataNet.fileNameView {
+                            addObject.fileNameView = fileNameView
+                        }
+                        addObject.path = metadataNet.path
                         addObject.selector = metadataNet.selector
                         
                         if let selectorPost = metadataNet.selectorPost {
@@ -2257,7 +2344,11 @@ class NCManageDatabase: NSObject {
                         
                         addObject.serverUrl = metadataNet.serverUrl
                         addObject.session = metadataNet.session
-                        
+                        addObject.sessionError = metadataNet.sessionError
+                        addObject.sessionID = metadataNet.sessionID
+                        addObject.sessionTaskIdentifier = metadataNet.sessionTaskIdentifier
+                        addObject.size = metadataNet.size
+
                         realm.add(addObject)
                     }
                 }
@@ -2265,86 +2356,6 @@ class NCManageDatabase: NSObject {
         } catch let error {
             print("[LOG] Could not write to database: ", error)
         }
-    }
-    
-    @objc func getQueueUploadLock(selector: String) -> CCMetadataNet? {
-        
-        guard let tableAccount = self.getAccountActive() else {
-            return nil
-        }
-        
-        let realm = try! Realm()
-
-        realm.beginWrite()
-        
-        guard let result = realm.objects(tableQueueUpload.self).filter("account = %@ AND selector = %@ AND lock == false", tableAccount.account, selector).sorted(byKeyPath: "date", ascending: true).first else {
-            realm.cancelWrite()
-            return nil
-        }
-        
-        let metadataNet = CCMetadataNet()
-        
-        metadataNet.account = result.account
-        metadataNet.assetLocalIdentifier = result.assetLocalIdentifier
-        metadataNet.fileName = result.fileName
-        metadataNet.selector = result.selector
-        metadataNet.selectorPost = result.selectorPost
-        metadataNet.serverUrl = result.serverUrl
-        metadataNet.session = result.session
-        metadataNet.taskStatus = Int(k_taskStatusResume)
-        
-        // Lock
-        result.lock = true
-        
-        do {
-            try realm.commitWrite()
-        } catch let error {
-            print("[LOG] Could not write to database: ", error)
-            return nil
-        }
-        
-        return metadataNet
-    }
-    
-    @objc func getQueueUploadLock() -> CCMetadataNet? {
-        
-        guard let tableAccount = self.getAccountActive() else {
-            return nil
-        }
-        
-        let realm = try! Realm()
-        realm.refresh()
-        
-        guard let result = realm.objects(tableQueueUpload.self).filter("account = %@ AND lock == false", tableAccount.account).sorted(byKeyPath: "date", ascending: true).first else {
-            return nil
-        }
-        
-        let metadataNet = CCMetadataNet()
-        
-        metadataNet.account = result.account
-        metadataNet.assetLocalIdentifier = result.assetLocalIdentifier
-        metadataNet.fileName = result.fileName
-        metadataNet.selector = result.selector
-        metadataNet.selectorPost = result.selectorPost
-        metadataNet.serverUrl = result.serverUrl
-        metadataNet.session = result.session
-        metadataNet.taskStatus = Int(k_taskStatusResume)
-        
-        return metadataNet
-    }
-    
-    @objc func getLockQueueUpload() -> [tableQueueUpload]? {
-        
-        guard let tableAccount = self.getAccountActive() else {
-            return nil
-        }
-        
-        let realm = try! Realm()
-        realm.refresh()
-        
-        let results = realm.objects(tableQueueUpload.self).filter("account = %@ AND lock = true", tableAccount.account)
-        
-        return Array(results.map { tableQueueUpload.init(value:$0) })
     }
     
     @objc func getQueueUpload(predicate: NSPredicate) -> [tableQueueUpload]? {
@@ -2361,12 +2372,117 @@ class NCManageDatabase: NSObject {
         return Array(results.map { tableQueueUpload.init(value:$0) })
     }
     
+    @objc func getQueueUpload() -> CCMetadataNet? {
+        
+        guard let tableAccount = self.getAccountActive() else {
+            return nil
+        }
+        
+        let realm = try! Realm()
+        realm.refresh()
+        
+        guard let result = realm.objects(tableQueueUpload.self).filter("account = %@ AND lock == false", tableAccount.account).sorted(byKeyPath: "date", ascending: true).first else {
+            return nil
+        }
+        
+        let metadataNet = CCMetadataNet()
+        
+        metadataNet.account = result.account
+        metadataNet.assetLocalIdentifier = result.assetLocalIdentifier
+        metadataNet.errorCode = result.errorCode
+        metadataNet.directoryID = self.getDirectoryID(result.serverUrl)
+        metadataNet.fileName = result.fileName
+        metadataNet.fileNameView = result.fileNameView
+        metadataNet.path = result.path
+        metadataNet.selector = result.selector
+        metadataNet.selectorPost = result.selectorPost
+        metadataNet.serverUrl = result.serverUrl
+        metadataNet.session = result.session
+        metadataNet.sessionError = result.sessionError
+        metadataNet.sessionID = result.sessionID
+        metadataNet.sessionTaskIdentifier = result.sessionTaskIdentifier
+        metadataNet.size = result.size
+        metadataNet.taskStatus = Int(k_taskStatusResume)
+        
+        return metadataNet
+    }
+    
+    @objc func getQueueUploadInLock() -> [tableQueueUpload]? {
+        
+        guard let tableAccount = self.getAccountActive() else {
+            return nil
+        }
+        
+        let realm = try! Realm()
+        realm.refresh()
+        
+        let results = realm.objects(tableQueueUpload.self).filter("account = %@ AND lock = true", tableAccount.account)
+        
+        return Array(results.map { tableQueueUpload.init(value:$0) })
+    }
+    
+    @objc func lockQueueUpload(selector: String, session: String?) -> CCMetadataNet? {
+        
+        guard let tableAccount = self.getAccountActive() else {
+            return nil
+        }
+        
+        var result: tableQueueUpload?
+        
+        let realm = try! Realm()
+        
+        if session == nil {
+            result = realm.objects(tableQueueUpload.self).filter("account = %@ AND selector = %@ AND lock == false", tableAccount.account, selector).sorted(byKeyPath: "date", ascending: true).first
+        } else {
+            result = realm.objects(tableQueueUpload.self).filter("account = %@ AND selector = %@ AND lock == false AND session == %@", tableAccount.account, selector, session!).sorted(byKeyPath: "date", ascending: true).first
+        }
+        
+        if result == nil {
+            return nil
+        }
+        
+        let directoryID = self.getDirectoryID(result!.serverUrl)
+        
+        realm.beginWrite()
+        
+        let metadataNet = CCMetadataNet()
+        
+        metadataNet.account = result!.account
+        metadataNet.assetLocalIdentifier = result!.assetLocalIdentifier
+        metadataNet.directoryID = directoryID
+        metadataNet.errorCode = result!.errorCode
+        metadataNet.fileName = result!.fileName
+        metadataNet.fileNameView = result!.fileNameView
+        metadataNet.path = result!.path
+        metadataNet.selector = result!.selector
+        metadataNet.selectorPost = result!.selectorPost
+        metadataNet.serverUrl = result!.serverUrl
+        metadataNet.session = result!.session
+        metadataNet.sessionError = result!.sessionError
+        metadataNet.sessionID = result!.sessionID
+        metadataNet.sessionTaskIdentifier = result!.sessionTaskIdentifier
+        metadataNet.size = result!.size
+        metadataNet.taskStatus = Int(k_taskStatusResume)
+        
+        // Lock
+        result!.lock = true
+        
+        do {
+            try realm.commitWrite()
+        } catch let error {
+            print("[LOG] Could not write to database: ", error)
+            return nil
+        }
+        
+        return metadataNet
+    }
+    
     @objc func unlockQueueUpload(assetLocalIdentifier: String) {
         
         guard let tableAccount = self.getAccountActive() else {
             return
         }
-        
+    
         let realm = try! Realm()
 
         realm.beginWrite()
@@ -2375,7 +2491,7 @@ class NCManageDatabase: NSObject {
             realm.cancelWrite()
             return
         }
-        
+      
         // UnLock
         result.lock = false
         
@@ -2398,6 +2514,26 @@ class NCManageDatabase: NSObject {
             try realm.write {
                 
                 if let result = realm.objects(tableQueueUpload.self).filter("account = %@ AND assetLocalIdentifier = %@ AND selector = %@", tableAccount.account, assetLocalIdentifier, selector).first {
+                    realm.delete(result)
+                }
+            }
+        } catch let error {
+            print("[LOG] Could not write to database: ", error)
+        }
+    }
+    
+    @objc func deleteQueueUpload(path: String) {
+        
+        guard let tableAccount = self.getAccountActive() else {
+            return
+        }
+        
+        let realm = try! Realm()
+        
+        do {
+            try realm.write {
+                
+                if let result = realm.objects(tableQueueUpload.self).filter("account = %@ AND path = %@", tableAccount.account, path).first {
                     realm.delete(result)
                 }
             }
@@ -2699,5 +2835,79 @@ class NCManageDatabase: NSObject {
         return Array(results)
     }
 
+    //MARK: -
+    //MARK: Table Tag
+    
+    @objc func addTag(_ fileID: String ,tagIOS: Data?) {
+        
+        guard let tableAccount = self.getAccountActive() else {
+            return
+        }
+        
+        let realm = try! Realm()
+        
+        do {
+            try realm.write {
+                
+                // Add new
+                let addObject = tableTag()
+                    
+                addObject.account = tableAccount.account
+                addObject.fileID = fileID
+                addObject.tagIOS = tagIOS
+    
+                realm.add(addObject, update: true)
+            }
+        } catch let error {
+            print("[LOG] Could not write to database: ", error)
+        }
+    }
+    
+    @objc func deleteTag(_ fileID: String) {
+        
+        guard let tableAccount = self.getAccountActive() else {
+            return
+        }
+        
+        let realm = try! Realm()
+        
+        realm.beginWrite()
+        
+        guard let result = realm.objects(tableTag.self).filter("account = %@ AND fileID = %@", tableAccount.account, fileID).first else {
+            realm.cancelWrite()
+            return
+        }
+        
+        realm.delete(result)
+        
+        do {
+            try realm.commitWrite()
+        } catch let error {
+            print("[LOG] Could not write to database: ", error)
+        }
+    }
+    
+    @objc func getTags(predicate: NSPredicate) -> [tableTag] {
+        
+        let realm = try! Realm()
+        realm.refresh()
+
+        let results = realm.objects(tableTag.self).filter(predicate)
+        
+        return Array(results.map { tableTag.init(value:$0) })
+    }
+    
+    @objc func getTag(predicate: NSPredicate) -> tableTag? {
+        
+        let realm = try! Realm()
+        realm.refresh()
+        
+        guard let result = realm.objects(tableTag.self).filter(predicate).first else {
+            return nil
+        }
+        
+        return tableTag.init(value: result)
+    }
+    
     //MARK: -
 }

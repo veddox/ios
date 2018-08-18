@@ -104,7 +104,7 @@
     _scrollBar.handleWidth = 20;
     _scrollBar.handleMinimiumHeight = 20;
     _scrollBar.trackWidth = 0;
-    _scrollBar.edgeInset = 12;    
+    _scrollBar.edgeInset = 12;
 }
 
 // Apparirà
@@ -182,16 +182,16 @@
     }
     
     if (_isSearchMode) {
-        [CCGraphics addImageToTitle:self.navigationItem.title colorTitle:[NCBrandColor sharedInstance].brandText imageTitle:[CCGraphics changeThemingColorImage:[UIImage imageNamed:@"loadingTitle"] color:[NCBrandColor sharedInstance].brandText] navigationItem:self.navigationItem];
+        [CCGraphics addImageToTitle:self.navigationItem.title colorTitle:[NCBrandColor sharedInstance].brandText imageTitle:[CCGraphics changeThemingColorImage:[UIImage imageNamed:@"load"] color:[NCBrandColor sharedInstance].brandText] navigationItem:self.navigationItem];
         [self.collectionView reloadData];
         return;
     }
     
     // Button Item
     UIImage *icon;
-    icon = [UIImage imageNamed:@"seleziona"];
+    icon = [UIImage imageNamed:@"select"];
     UIBarButtonItem *buttonSelect = [[UIBarButtonItem alloc] initWithImage:icon style:UIBarButtonItemStylePlain target:self action:@selector(editingModeYES)];
-    icon = [UIImage imageNamed:@"startDirectoryPhotosTab"];
+    icon = [UIImage imageNamed:@"folderPhotos"];
     UIBarButtonItem *buttonStartDirectoryPhotosTab = [[UIBarButtonItem alloc] initWithImage:icon style:UIBarButtonItemStylePlain target:self action:@selector(selectStartDirectoryPhotosTab)];
 
     if ([_sectionDataSource.allRecordsDataSource count] > 0) {
@@ -208,10 +208,10 @@
 {
     UIImage *icon;
     
-    icon = [UIImage imageNamed:@"deleteSelectedFiles"];
+    icon = [UIImage imageNamed:@"delete"];
     UIBarButtonItem *buttonDelete = [[UIBarButtonItem alloc] initWithImage:icon style:UIBarButtonItemStylePlain target:self action:@selector(deleteSelectedFiles)];
     
-    icon = [UIImage imageNamed:@"openSelectedFiles"];
+    icon = [UIImage imageNamed:@"openFile"];
     UIBarButtonItem *buttonOpenWith = [[UIBarButtonItem alloc] initWithImage:icon style:UIBarButtonItemStylePlain target:self action:@selector(openSelectedFiles)];
     
     UIBarButtonItem *leftButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"_cancel_", nil) style:UIBarButtonItemStylePlain target:self action:@selector(editingModeNO)];
@@ -297,7 +297,7 @@
 
 - (UIImage *)imageForEmptyDataSet:(UIScrollView *)scrollView
 {
-    return [CCGraphics changeThemingColorImage:[UIImage imageNamed:@"photosNoRecord"] color:[NCBrandColor sharedInstance].brandElement];
+    return [CCGraphics changeThemingColorImage:[UIImage imageNamed:@"photosNoRecord"] color:[NCBrandColor sharedInstance].graySoft];
 }
 
 - (NSAttributedString *)titleForEmptyDataSet:(UIScrollView *)scrollView
@@ -404,6 +404,8 @@
                 self.navigationItem.leftBarButtonItem.enabled = YES;
                 self.navigationItem.rightBarButtonItem.enabled = YES;
                 
+                [self editingModeNO];
+
                 if (completed) {
                     [self.collectionView reloadData];
                 }
@@ -453,6 +455,37 @@
 #pragma mark ===== Delete =====
 #pragma--------------------------------------------------------------------------------------------
 
+/* TEST
+- (void)deleteFileOrFolder
+{
+    tableMetadata *metadata = [_selectedMetadatas objectAtIndex:0];
+    NSString *serverUrl = [[NCManageDatabase sharedInstance] getServerUrl:metadata.directoryID];
+    
+    [_hud visibleHudTitle:@"c" mode:MBProgressHUDModeIndeterminate color:nil];
+    
+    [_oc deleteFileOrFolder:metadata.fileName serverUrl:serverUrl success:^{
+        
+        [_selectedMetadatas removeObjectAtIndex:0];
+        
+        if ([_selectedMetadatas count] > 0) {
+            
+            [self performSelectorOnMainThread:@selector(deleteFileOrFolder) withObject:nil waitUntilDone:0];
+            
+        } else {
+            [_hud hideHud];
+            [self editingModeNO];
+            [self reloadDatasourceFromSearch:NO];
+        }
+        
+    } failure:^(NSString *message, NSInteger errorCode) {
+        
+        [_hud hideHud];
+        [self editingModeNO];
+        [self reloadDatasourceFromSearch:NO];
+    }];
+}
+*/
+
 - (void)deleteFileOrFolderSuccessFailure:(CCMetadataNet *)metadataNet message:(NSString *)message errorCode:(NSInteger)errorCode
 {
     [_queueMetadatas removeObject:metadataNet.selector];
@@ -472,6 +505,7 @@
             } else {
                 
                 [self reloadDatasourceFromSearch:NO];
+                [self editingModeNO];
             }
             
         } else {
@@ -632,30 +666,23 @@
     // account.dateSearchContentTypeImageVideo
     
     NSString *startDirectory = [[NCManageDatabase sharedInstance] getAccountStartDirectoryPhotosTab:[CCUtility getHomeServerUrlActiveUrl:appDelegate.activeUrl]];
-
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+    OCnetworking *ocNetworking = [[OCnetworking alloc] initWithDelegate:self metadataNet:nil withUser:appDelegate.activeUser withUserID:appDelegate.activeUserID withPassword:appDelegate.activePassword withUrl:appDelegate.activeUrl];
+    
+    [ocNetworking readFile:nil serverUrl:startDirectory account:appDelegate.activeAccount success:^(tableMetadata *metadata) {
         
-        NSArray *items;
-        NSError *error = [[NCNetworkingSync sharedManager] readFile:startDirectory user:appDelegate.activeUser userID:appDelegate.activeUserID password:appDelegate.activePassword items:&items];
-        
-        if (error == nil && items.count > 0) {
-        
-            OCFileDto *fileStartDirectory = items[0];
+        if (![metadata.etag isEqualToString:[_saveEtagForStartDirectory objectForKey:startDirectory]] || _sectionDataSource.allRecordsDataSource.count == 0) {
             
-            if (![fileStartDirectory.etag isEqualToString:[_saveEtagForStartDirectory objectForKey:startDirectory]]) {
-                
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [[CCActions sharedInstance] search:startDirectory fileName:@"" etag:fileStartDirectory.etag depth:@"infinity" date:[NSDate distantPast] contenType:@[@"image/%", @"video/%"] selector:selectorSearchContentType delegate:self];
-                    [self searchInProgress:YES];
-                    [self editingModeNO];
-                });
-            } else {
-                [self reloadDatasourceFromSearch:YES];
-            }
+            [[CCActions sharedInstance] search:startDirectory fileName:@"" etag:metadata.etag depth:@"infinity" date:[NSDate distantPast] contenType:@[@"image/%", @"video/%"] selector:selectorSearchContentType delegate:self];
+            [self searchInProgress:YES];
+            [self editingModeNO];
+            
         } else {
             [self reloadDatasourceFromSearch:YES];
         }
-    });
+        
+    } failure:^(NSString *message, NSInteger errorCode) {
+        [self reloadDatasourceFromSearch:YES];
+    }];
 }
 
 #pragma --------------------------------------------------------------------------------------------

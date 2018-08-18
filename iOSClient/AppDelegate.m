@@ -101,10 +101,10 @@
     }
 
     NSString *dir;
-    NSURL *dirGroup = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:[NCBrandOptions sharedInstance].capabilitiesGroups];
+    NSURL *dirGroup = [CCUtility getDirectoryGroup];
     
     NSLog(@"[LOG] Start program group -----------------");
-    NSLog(@"%@", dirGroup);    
+    NSLog(@"%@", [dirGroup path]);    
     NSLog(@"[LOG] Start program application -----------");
     NSLog(@"%@", [[CCUtility getDirectoryDocuments] stringByDeletingLastPathComponent]);
     NSLog(@"[LOG] -------------------------------------");
@@ -122,8 +122,13 @@
     // create Directory database Nextcloud
     dir = [[dirGroup URLByAppendingPathComponent:appDatabaseNextcloud] path];
     if (![[NSFileManager defaultManager] fileExistsAtPath:dir])
-    [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
+        [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
 
+    // create directory Provider Storage
+    dir = [CCUtility getDirectoryProviderStorage];
+    if (![[NSFileManager defaultManager] fileExistsAtPath: dir] && [dir length])
+        [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
+    
     NSError *error = nil;
     [[NSFileManager defaultManager] setAttributes:@{NSFileProtectionKey:NSFileProtectionNone} ofItemAtPath:dir error:&error];
     
@@ -857,14 +862,14 @@
     // File
     item = [tabBarController.tabBar.items objectAtIndex: k_tabBarApplicationIndexFile];
     [item setTitle:NSLocalizedString(@"_home_", nil)];
-    item.image = [UIImage imageNamed:@"tabBarFiles"];
-    item.selectedImage = [UIImage imageNamed:@"tabBarFiles"];
+    item.image = [UIImage imageNamed:@"folder"];
+    item.selectedImage = [UIImage imageNamed:@"folder"];
     
     // Favorites
     item = [tabBarController.tabBar.items objectAtIndex: k_tabBarApplicationIndexFavorite];
     [item setTitle:NSLocalizedString(@"_favorites_", nil)];
-    item.image = [UIImage imageNamed:@"tabBarFavorite"];
-    item.selectedImage = [UIImage imageNamed:@"tabBarFavorite"];
+    item.image = [UIImage imageNamed:@"favorite"];
+    item.selectedImage = [UIImage imageNamed:@"favorite"];
     
     // (PLUS)
     item = [tabBarController.tabBar.items objectAtIndex: k_tabBarApplicationIndexPlusHide];
@@ -875,8 +880,8 @@
     // Photos
     item = [tabBarController.tabBar.items objectAtIndex: k_tabBarApplicationIndexPhotos];
     [item setTitle:NSLocalizedString(@"_photo_camera_", nil)];
-    item.image = [UIImage imageNamed:@"tabBarPhotos"];
-    item.selectedImage = [UIImage imageNamed:@"tabBarPhotos"];
+    item.image = [UIImage imageNamed:@"photos"];
+    item.selectedImage = [UIImage imageNamed:@"photos"];
     
     // More
     item = [tabBarController.tabBar.items objectAtIndex: k_tabBarApplicationIndexMore];
@@ -895,19 +900,25 @@
     [buttonPlus setTranslatesAutoresizingMaskIntoConstraints:NO];
     [tabBarController.tabBar addSubview:buttonPlus];
     
-    constraint =[NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0];
+    multiplier = 1.0;
+    // X
+    constraint =[NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeCenterX multiplier:multiplier constant:0];
+    [tabBarController.view addConstraint:constraint];
+    // Y
+    if (safeAreaBottom == 0) {
+        constraint = [NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeCenterY multiplier:multiplier constant:0];
+    } else {
+        constraint = [NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeBottom relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:+5];
+    }
     [tabBarController.view addConstraint:constraint];
     
-    multiplier = 1 * (tabBarController.tabBar.frame.size.height - safeAreaBottom) / tabBarController.tabBar.frame.size.height;
-    constraint =[NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeCenterY multiplier:multiplier constant:0];
-    [tabBarController.view addConstraint:constraint];
     
     multiplier = 0.8 * (tabBarController.tabBar.frame.size.height - safeAreaBottom) / tabBarController.tabBar.frame.size.height;
-    
-    constraint =[NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeHeight multiplier:multiplier constant:0];
+    // Width
+    constraint = [NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeHeight multiplier:multiplier constant:0];
     [tabBarController.view addConstraint:constraint];
-    
-    constraint =[NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeHeight multiplier:multiplier constant:0];
+    // Height
+    constraint = [NSLayoutConstraint constraintWithItem:buttonPlus attribute:NSLayoutAttributeHeight relatedBy:NSLayoutRelationEqual toItem:tabBarController.tabBar attribute:NSLayoutAttributeHeight multiplier:multiplier constant:0];
     [tabBarController.view addConstraint:constraint];
 }
 
@@ -1337,7 +1348,7 @@
         if ([metadata.session isEqualToString:k_upload_session_wwan])
             metadata.session = k_upload_session;
         
-        [[CCNetworking sharedNetworking] uploadFileMetadata:metadata taskStatus:k_taskStatusResume];
+        [[CCNetworking sharedNetworking] uploadFileMetadata:metadata taskStatus:k_taskStatusResume delegate:nil];
     }
     else if ([[_listChangeTask objectForKey:fileID] isEqualToString:@"reloadDownload"]) {
         
@@ -1404,10 +1415,10 @@
 - (void)loadAutoDownloadUpload:(NSNumber *)maxConcurrent
 {
     CCMetadataNet *metadataNet;
-    
+        
     // E2EE : not in background
     if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
-        metadataNet = [[NCManageDatabase sharedInstance] getQueueUploadLock];
+        metadataNet = [[NCManageDatabase sharedInstance] getQueueUpload];
         if (metadataNet) {
             tableDirectory *directory = [[NCManageDatabase sharedInstance] getTableDirectoryWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND serverUrl = %@ AND e2eEncrypted = 1", self.activeAccount, metadataNet.serverUrl]];
             if (directory != nil)
@@ -1421,7 +1432,7 @@
     NSInteger maxConcurrentDownloadUpload = [maxConcurrent integerValue];
     
     NSInteger counterDownloadInSession = [[[NCManageDatabase sharedInstance] getTableMetadataDownload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataDownloadWWan] count];
-    NSInteger counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getLockQueueUpload] count];
+    NSInteger counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getQueueUploadInLock] count];
     NSInteger counterUploadInLock = [[[NCManageDatabase sharedInstance] getQueueUploadWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND lock = true", self.activeAccount]] count];
 
     NSInteger counterNewUpload = 0;
@@ -1445,7 +1456,7 @@
     
     if (counterUploadInSessionAndInLock < maxConcurrentDownloadUpload && counterUploadInLock < 1) {
         
-        metadataNet = [[NCManageDatabase sharedInstance] getQueueUploadLockWithSelector:selectorUploadAutoUpload];
+        metadataNet = [[NCManageDatabase sharedInstance] lockQueueUploadWithSelector:selectorUploadAutoUpload session:nil];
         if (metadataNet) {
             
             [[CCNetworking sharedNetworking] uploadFileFromAssetLocalIdentifier:metadataNet delegate:_activeMain];
@@ -1453,7 +1464,7 @@
             counterNewUpload++;
         }
         
-        counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getLockQueueUpload] count];
+        counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getQueueUploadInLock] count];
     }
     
     // ------------------------- <selector Auto Upload All> ----------------------
@@ -1473,7 +1484,7 @@
         
         if (counterUploadInSessionAndInLock < maxConcurrentDownloadUpload && counterUploadInLock < 1) {
             
-            metadataNet = [[NCManageDatabase sharedInstance] getQueueUploadLockWithSelector:selectorUploadAutoUploadAll];
+            metadataNet = [[NCManageDatabase sharedInstance] lockQueueUploadWithSelector:selectorUploadAutoUploadAll session:nil];
             if (metadataNet) {
                 
                 [[CCNetworking sharedNetworking] uploadFileFromAssetLocalIdentifier:metadataNet delegate:_activeMain];
@@ -1481,7 +1492,7 @@
                 counterNewUpload++;
             }
             
-            counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getLockQueueUpload] count];
+            counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getQueueUploadInLock] count];
         }
     }
     
@@ -1489,15 +1500,30 @@
     
     if (counterUploadInSessionAndInLock < maxConcurrentDownloadUpload && counterUploadInLock < 1) {
         
-        metadataNet = [[NCManageDatabase sharedInstance] getQueueUploadLockWithSelector:selectorUploadFile];
+        metadataNet = [[NCManageDatabase sharedInstance] lockQueueUploadWithSelector:selectorUploadFile session:nil];
         if (metadataNet) {
             
-            [[CCNetworking sharedNetworking] uploadFileFromAssetLocalIdentifier:metadataNet delegate:_activeMain];
+            if ([metadataNet.session isEqualToString:k_upload_session_extension]) {
+                
+                NSString *atPath = [NSString stringWithFormat:@"%@/%@", metadataNet.path, metadataNet.fileName];
+                NSString *toPath = [NSString stringWithFormat:@"%@/%@", self.directoryUser, metadataNet.fileName];
+                [CCUtility copyFileAtPath:atPath toPath:toPath];
+                
+                metadataNet.fileID = @"";
+                metadataNet.session = k_upload_session;
+                
+                [[CCNetworking sharedNetworking] uploadFile:metadataNet.fileName serverUrl:metadataNet.serverUrl assetLocalIdentifier:metadataNet.assetLocalIdentifier path:self.directoryUser session:metadataNet.session taskStatus:k_taskStatusResume selector:metadataNet.selector selectorPost:metadataNet.selectorPost errorCode:0 delegate:_activeMain];
+                
+            } else {
+                
+                [[CCNetworking sharedNetworking] uploadFileFromAssetLocalIdentifier:metadataNet delegate:_activeMain];
+            }
+            
             
             counterNewUpload++;
         }
         
-        counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getLockQueueUpload] count];
+        counterUploadInSessionAndInLock = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count] + [[[NCManageDatabase sharedInstance] getQueueUploadInLock] count];
     }
     
     // Start Timer
@@ -1515,17 +1541,16 @@
         return;
     
     NSInteger counterUploadInSession = [[[NCManageDatabase sharedInstance] getTableMetadataUpload] count] + [[[NCManageDatabase sharedInstance] getTableMetadataUploadWWan] count];
-    NSArray *tableMetadatasInLock = [[NCManageDatabase sharedInstance] getLockQueueUpload];
+    NSArray *tableMetadatasInLock = [[NCManageDatabase sharedInstance] getQueueUploadInLock];
      
-     if (counterUploadInSession == 0 && [tableMetadatasInLock count] > 0) {
+    if (counterUploadInSession == 0 && [tableMetadatasInLock count] > 0) {
      
-         // Unlock
-         for (tableMetadata *metadata in tableMetadatasInLock) {
-     
-             if ([[NCManageDatabase sharedInstance] isTableInvalidated:metadata] == NO)
-                 [[NCManageDatabase sharedInstance] unlockQueueUploadWithAssetLocalIdentifier:metadata.assetLocalIdentifier];
-         }
-     }
+        // Unlock
+        for (tableMetadata *metadata in tableMetadatasInLock) {
+            if ([[NCManageDatabase sharedInstance] isTableInvalidated:metadata] == NO)
+                [[NCManageDatabase sharedInstance] unlockQueueUploadWithAssetLocalIdentifier:metadata.assetLocalIdentifier];
+        }
+    }
 }
 
 - (void)verifyUploadInErrorOrWait
@@ -1542,7 +1567,7 @@
     
     for (tableMetadata *metadata in metadatas) {
         
-        [[CCNetworking sharedNetworking] uploadFileMetadata:metadata taskStatus: k_taskStatusResume];
+        [[CCNetworking sharedNetworking] uploadFileMetadata:metadata taskStatus: k_taskStatusResume delegate:nil];
         
         [directoryIDs addObject:metadata.directoryID];
         

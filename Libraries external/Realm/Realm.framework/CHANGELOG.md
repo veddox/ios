@@ -1,3 +1,101 @@
+3.7.2 Release notes (2018-06-13)
+=============================================================
+
+### Enhancements
+
+* Add some additional consistency checks that will hopefully produce better
+  errors when the "prev_ref + prev_size <= ref" assertion failure occurs.
+
+### Bugfixes
+
+* Fix a problem in the changeset indexing algorithm that would sometimes
+  cause "bad permission object" and "bad changeset" errors.
+* Fix a large number of linking warnings about symbol visibility by aligning
+  compiler flags used.
+* Fix large increase in size of files produced by `Realm.writeCopy()` introduced in 3.6.0.
+
+3.7.1 Release notes (2018-06-07)
+=============================================================
+
+* Add support for compiling Realm Swift with Xcode 10 beta 1.
+
+3.7.0 Release notes (2018-06-06)
+=============================================================
+
+The feature known as Partial Sync has been renamed to Query-based
+Synchronization. This has impacted a number of API's. See below for the
+details.
+
+### Deprecations
+
+* `+[RLMSyncConfiguration initWithUser] has been deprecated in favor of `-[RLMSyncUser configurationWithURL:url].
+* `+[RLMSyncConfiguration automaticConfiguration] has been deprecated in favor of `-[RLMSyncUser configuration]. 
+* `+[RLMSyncConfiguration automaticConfigurationForUser] has been deprecated in favor of `-[RLMSyncUser configuration].
+* `-[RLMSyncConfiguration isPartial] has been deprecated in favor of `-[RLMSyncConfiguration fullSynchronization]`.
+
+### Enhancements
+
+* Add `-[RLMRealm syncSession]` and  `Realm.syncSession` to obtain the session used for a synchronized Realm.
+* Add `-[RLMSyncUser configuration]`. Query-based sync is the default sync mode for this configuration.
+* Add `-[RLMSyncUser configurationWithURL:url]`. Query-based sync is the default sync mode for this configuration.
+
+3.6.0 Release notes (2018-05-29)
+=============================================================
+
+### Enhancements
+
+* Improve performance of sync metadata operations and resolving thread-safe
+  references.
+* `shouldCompactOnLaunch` is now supported for compacting the local data of
+  synchronized Realms.
+
+### Bugfixes
+
+* Fix a potential deadlock when a sync session progress callback held the last
+  strong reference to the sync session.
+* Fix some cases where comparisons to `nil` in queries were not properly
+  serialized when subscribing to a query.
+* Don't delete objects added during a migration after a call to `-[RLMMigration
+  deleteDataForClassName:]`.
+* Fix incorrect results and/or crashes when multiple `-[RLMMigration
+  enumerateObjects:block:]` blocks deleted objects of the same type.
+* Fix some edge-cases where `-[RLMMigration enumerateObjects:block:]`
+  enumerated the incorrect objects following deletions.
+* Restore the pre-3.5.0 behavior for Swift optional properties missing an ivar
+  rather than crashing.
+
+3.5.0 Release notes (2018-04-25)
+=============================================================
+
+### Enhancements
+
+* Add wrapper functions for email confirmation and password reset to `SyncUser`.
+
+### Bugfixes
+
+* Fix incorrect results when using optional chaining to access a RealmOptional
+  property in Release builds, or otherwise interacting with a RealmOptional
+  object after the owning Object has been deallocated.
+
+3.4.0 Release notes (2018-04-19)
+=============================================================
+
+The prebuilt binary for Carthage is now built for Swift 4.1.
+
+### Enhancements
+
+* Expose `RLMSyncManager.authorizationHeaderName`/`SyncManager.authorizationHeaderName`
+  as a way to override the transport header for Realm Object Server authorization.
+* Expose `RLMSyncManager.customRequestHeaders`/`SyncManager.customRequestHeaders`
+  which allows custom HTTP headers to be appended on requests to the Realm Object Server.
+* Expose `RLMSSyncConfiguration.urlPrefix`/`SyncConfiguration.urlPrefix` as a mechanism
+  to replace the default path prefix in Realm Sync WebSocket requests.
+
+3.3.2 Release notes (2018-04-03)
+=============================================================
+
+Add a prebuilt binary for Xcode 9.3.
+
 3.3.1 Release notes (2018-03-28)
 =============================================================
 

@@ -23,7 +23,7 @@
 
 #import "CCNetworking.h"
 #import "NCEndToEndEncryption.h"
-#import "NCNetworkingSync.h"
+#import "NCNetworkingEndToEnd.h"
 #import "AppDelegate.h"
 #import "CCCertificate.h"
 #import "NSDate+ISO8601.h"
@@ -71,6 +71,9 @@
     [self sessionUpload];
     [self sessionWWanUpload];
     [self sessionUploadForeground];
+    
+    // *** NOT Initialize ONLY for EXTENSION !!!!! ***
+    // [self sessionUploadExtension];
     
     [self sharedOCCommunication];
     
@@ -167,7 +170,7 @@
         configuration.discretionary = NO;
         configuration.HTTPMaximumConnectionsPerHost = 1;
         configuration.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
-        
+
         sessionUpload = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
         sessionUpload.sessionDescription = k_upload_session;
     }
@@ -213,14 +216,35 @@
     return sessionUploadForeground;
 }
 
+- (NSURLSession *)sessionUploadExtension
+{
+    static NSURLSession *sessionUpload = nil;
+    
+    if (sessionUpload == nil) {
+        
+        NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:k_upload_session_extension];
+        
+        configuration.allowsCellularAccess = YES;
+        configuration.sessionSendsLaunchEvents = YES;
+        configuration.discretionary = NO;
+        configuration.HTTPMaximumConnectionsPerHost = 1;
+        configuration.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+        configuration.sharedContainerIdentifier = [NCBrandOptions sharedInstance].capabilitiesGroups;
+        
+        sessionUpload = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
+        sessionUpload.sessionDescription = k_upload_session_extension;
+    }
+    return sessionUpload;
+}
+
 - (OCCommunication *)sharedOCCommunication
 {
     static OCCommunication* sharedOCCommunication = nil;
     
     if (sharedOCCommunication == nil)
     {
+        // Network
         NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
-        
         configuration.allowsCellularAccess = YES;
         configuration.discretionary = NO;
         configuration.HTTPMaximumConnectionsPerHost = k_maxConcurrentOperation;
@@ -230,10 +254,64 @@
         [networkSessionManager.operationQueue setMaxConcurrentOperationCount: k_maxConcurrentOperation];
         networkSessionManager.responseSerializer = [AFHTTPResponseSerializer serializer];
         
-        sharedOCCommunication = [[OCCommunication alloc] initWithUploadSessionManager:nil andDownloadSessionManager:nil andNetworkSessionManager:networkSessionManager];
+        // Download
+        NSURLSessionConfiguration *configurationDownload = [NSURLSessionConfiguration defaultSessionConfiguration];
+        configurationDownload.allowsCellularAccess = YES;
+        configurationDownload.discretionary = NO;
+        configurationDownload.HTTPMaximumConnectionsPerHost = 1;
+        configurationDownload.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+        configurationDownload.timeoutIntervalForRequest = k_timeout_upload;
+        
+        OCURLSessionManager *downloadSessionManager = [[OCURLSessionManager alloc] initWithSessionConfiguration:configurationDownload];
+        [downloadSessionManager.operationQueue setMaxConcurrentOperationCount:1];
+        [downloadSessionManager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition (NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential * __autoreleasing *credential) {
+            return NSURLSessionAuthChallengePerformDefaultHandling;
+        }];
+        
+        // Upload
+        NSURLSessionConfiguration *configurationUpload = [NSURLSessionConfiguration defaultSessionConfiguration];
+        configurationUpload.allowsCellularAccess = YES;
+        configurationUpload.discretionary = NO;
+        configurationUpload.HTTPMaximumConnectionsPerHost = 1;
+        configurationUpload.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+        configurationUpload.timeoutIntervalForRequest = k_timeout_upload;
+
+        OCURLSessionManager *uploadSessionManager = [[OCURLSessionManager alloc] initWithSessionConfiguration:configurationUpload];
+        [uploadSessionManager.operationQueue setMaxConcurrentOperationCount:1];
+        [uploadSessionManager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition (NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential * __autoreleasing *credential) {
+            return NSURLSessionAuthChallengePerformDefaultHandling;
+        }];
+        
+        sharedOCCommunication = [[OCCommunication alloc] initWithUploadSessionManager:uploadSessionManager andDownloadSessionManager:downloadSessionManager andNetworkSessionManager:networkSessionManager];
     }
     
     return sharedOCCommunication;
+}
+
+- (OCCommunication *)sharedOCCommunicationExtensionDownload
+{
+    static OCCommunication *sharedOCCommunicationExtensionDownload = nil;
+    
+    if (sharedOCCommunicationExtensionDownload == nil)
+    {
+        NSURLSessionConfiguration *config = [NSURLSessionConfiguration backgroundSessionConfigurationWithIdentifier:k_download_session_extension];
+        config.sharedContainerIdentifier = [NCBrandOptions sharedInstance].capabilitiesGroups;
+        config.HTTPMaximumConnectionsPerHost = 1;
+        config.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
+        config.timeoutIntervalForRequest = k_timeout_upload;
+        config.sessionSendsLaunchEvents = YES;
+        [config setAllowsCellularAccess:YES];
+        
+        OCURLSessionManager *sessionManager = [[OCURLSessionManager alloc] initWithSessionConfiguration:config];
+        [sessionManager.operationQueue setMaxConcurrentOperationCount:1];
+        [sessionManager setSessionDidReceiveAuthenticationChallengeBlock:^NSURLSessionAuthChallengeDisposition (NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential * __autoreleasing *credential) {
+            return NSURLSessionAuthChallengePerformDefaultHandling;
+        }];
+        
+        sharedOCCommunicationExtensionDownload = [[OCCommunication alloc] initWithUploadSessionManager:nil andDownloadSessionManager:sessionManager andNetworkSessionManager:nil];
+    }
+    
+    return sharedOCCommunicationExtensionDownload;
 }
 
 - (NSURLSession *)getSessionfromSessionDescription:(NSString *)sessionDescription
@@ -347,6 +425,16 @@
     }];
 }
 
+- (NSArray *)getUploadTasksExtensionSession
+{
+    __block NSArray *tasks = [NSArray new];
+    [[self sessionUploadExtension] getTasksWithCompletionHandler:^(NSArray *dataTasks, NSArray *uploadTasks, NSArray *downloadTasks) {
+        tasks =  uploadTasks;
+    }];
+    
+    return tasks;
+}
+
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ===== URLSession download/upload =====
 #pragma --------------------------------------------------------------------------------------------
@@ -449,7 +537,7 @@
     
     if ([task isKindOfClass:[NSURLSessionUploadTask class]]) {
         
-        metadata = [[NCManageDatabase sharedInstance] getMetadataWithPredicate:[NSPredicate predicateWithFormat:@"session = %@ AND sessionTaskIdentifier = %i",session.sessionDescription, task.taskIdentifier]];
+        metadata = [[NCManageDatabase sharedInstance] getMetadataWithPredicate:[NSPredicate predicateWithFormat:@"session = %@ AND sessionTaskIdentifier = %i", session.sessionDescription, task.taskIdentifier]];
         
         if (!metadata)
             metadata = [[NCManageDatabase sharedInstance] getMetadataWithPredicate:[NSPredicate predicateWithFormat:@"directoryID = %@ AND fileName = %@", directoryID, fileName]];
@@ -602,7 +690,7 @@
     
     float progress = (float) totalBytesWritten / (float)totalBytesExpectedToWrite;
     
-    tableMetadata *metadata = [[NCManageDatabase sharedInstance] getMetadataFromFileName:fileName directoryID:directoryID];
+    tableMetadata *metadata = [[NCManageDatabase sharedInstance] getMetadataInSessionFromFileName:fileName directoryID:directoryID];
     
     if (metadata) {
         
@@ -775,7 +863,7 @@
                 [delegate uploadFileSuccessFailure:metadataNet.fileName fileID:metadataNet.fileID assetLocalIdentifier:metadataNet.assetLocalIdentifier serverUrl:metadataNet.serverUrl selector:metadataNet.selector selectorPost:metadataNet.selectorPost errorMessage:[NSString stringWithFormat:@"Image request failed [%@]", error.description] errorCode:error.code];
             } else {
                 // OOOOOK
-                [self upload:metadataNet.fileName serverUrl:metadataNet.serverUrl assetLocalIdentifier:metadataNet.assetLocalIdentifier session:metadataNet.session taskStatus:metadataNet.taskStatus selector:metadataNet.selector selectorPost:metadataNet.selectorPost errorCode:metadataNet.errorCode delegate:delegate];
+                [self upload:metadataNet.fileName serverUrl:metadataNet.serverUrl assetLocalIdentifier:metadataNet.assetLocalIdentifier path:_directoryUser session:metadataNet.session taskStatus:metadataNet.taskStatus selector:metadataNet.selector selectorPost:metadataNet.selectorPost errorCode:metadataNet.errorCode delegate:delegate];
             }
         }];
     }
@@ -811,7 +899,7 @@
                 } else {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         // OOOOOK
-                        [self upload:metadataNet.fileName serverUrl:metadataNet.serverUrl assetLocalIdentifier:metadataNet.assetLocalIdentifier session:metadataNet.session taskStatus:metadataNet.taskStatus selector:metadataNet.selector selectorPost:metadataNet.selectorPost errorCode:metadataNet.errorCode delegate:delegate];
+                        [self upload:metadataNet.fileName serverUrl:metadataNet.serverUrl assetLocalIdentifier:metadataNet.assetLocalIdentifier path:_directoryUser session:metadataNet.session taskStatus:metadataNet.taskStatus selector:metadataNet.selector selectorPost:metadataNet.selectorPost errorCode:metadataNet.errorCode delegate:delegate];
                     });
                 }
             }
@@ -819,19 +907,19 @@
     }
 }
 
-- (void)uploadFile:(NSString *)fileName serverUrl:(NSString *)serverUrl session:(NSString *)session taskStatus:(NSInteger)taskStatus selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorCode:(NSInteger)errorCode delegate:(id)delegate
+- (void)uploadFile:(NSString *)fileName serverUrl:(NSString *)serverUrl assetLocalIdentifier:(NSString *)assetLocalIdentifier path:(NSString *)path session:(NSString *)session taskStatus:(NSInteger)taskStatus selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorCode:(NSInteger)errorCode delegate:(id)delegate
 {
-    [self upload:fileName serverUrl:serverUrl assetLocalIdentifier:nil session:session taskStatus:taskStatus selector:selector selectorPost:selectorPost errorCode:errorCode delegate:delegate];
+    [self upload:fileName serverUrl:serverUrl assetLocalIdentifier:assetLocalIdentifier path:path session:session taskStatus:taskStatus selector:selector selectorPost:selectorPost errorCode:errorCode delegate:delegate];
 }
 
-- (void)upload:(NSString *)fileName serverUrl:(NSString *)serverUrl assetLocalIdentifier:(NSString *)assetLocalIdentifier session:(NSString *)session taskStatus:(NSInteger)taskStatus selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorCode:(NSInteger)errorCode delegate:(id)delegate
+- (void)upload:(NSString *)fileName serverUrl:(NSString *)serverUrl assetLocalIdentifier:(NSString *)assetLocalIdentifier path:(NSString *)path session:(NSString *)session taskStatus:(NSInteger)taskStatus selector:(NSString *)selector selectorPost:(NSString *)selectorPost errorCode:(NSInteger)errorCode delegate:(id)delegate
 {
     NSString *directoryID = [[NCManageDatabase sharedInstance] getDirectoryID:serverUrl];
     if (!directoryID) return;
     
-    //fileID
-    NSString *uploadID =  [k_uploadSessionID stringByAppendingString:[CCUtility createRandomString:16]];
-    
+    //fileID - UploadID
+    NSString *uploadID = [directoryID stringByAppendingString:fileName];
+
     //add delegate
     if (delegate)
         [_delegates setObject:delegate forKey:uploadID];
@@ -839,13 +927,14 @@
     // create Metadata for Upload
     tableMetadata *metadata = [CCUtility insertFileSystemInMetadata:fileName fileNameView:fileName directory:_directoryUser activeAccount:_activeAccount];
     
+    metadata.assetLocalIdentifier = assetLocalIdentifier;
     metadata.date = [NSDate new];
     metadata.e2eEncrypted = NO;
     metadata.fileID = uploadID;
     metadata.directoryID = directoryID;
     metadata.fileName = fileName;
     metadata.fileNameView = fileName;
-    metadata.assetLocalIdentifier = assetLocalIdentifier;
+    metadata.path = path;
     metadata.session = session;
     metadata.sessionID = uploadID;
     metadata.sessionSelector = selector;
@@ -881,16 +970,22 @@
         
     } else {
     
+#ifndef EXTENSION
         [CCGraphics createNewImageFrom:metadata.fileNameView directoryUser:_directoryUser fileNameTo:metadata.fileID extension:[metadata.fileNameView pathExtension] size:@"m" imageForUpload:YES typeFile:metadata.typeFile writePreview:YES optimizedFileName:NO];
+#endif
         [self uploadURLSessionMetadata:[[NCManageDatabase sharedInstance] addMetadata:metadata] serverUrl:serverUrl sessionID:uploadID taskStatus:taskStatus assetLocalIdentifier:assetLocalIdentifier selector:selector];
     }
 }
 
-- (void)uploadFileMetadata:(tableMetadata *)metadata taskStatus:(NSInteger)taskStatus
+- (void)uploadFileMetadata:(tableMetadata *)metadata taskStatus:(NSInteger)taskStatus delegate:(id)delegate
 {
     BOOL reSend = NO;
     NSString *serverUrl = [[NCManageDatabase sharedInstance] getServerUrl:metadata.directoryID];
     if (!serverUrl) return;
+    
+    //add delegate
+    if (delegate)
+        [_delegates setObject:delegate forKey:metadata.fileID];
     
     if ([[NSFileManager defaultManager] fileExistsAtPath:[NSString stringWithFormat:@"%@/%@", _directoryUser, metadata.sessionID]]) {
             
@@ -967,6 +1062,7 @@
     if ([metadata.session isEqualToString:k_upload_session]) sessionUpload = [self sessionUpload];
     else if ([metadata.session isEqualToString:k_upload_session_wwan]) sessionUpload = [self sessionWWanUpload];
     else if ([metadata.session isEqualToString:k_upload_session_foreground]) sessionUpload = [self sessionUploadForeground];
+    else if ([metadata.session isEqualToString:k_upload_session_extension]) sessionUpload = [self sessionUploadExtension];
 
     NSURLSessionUploadTask *uploadTask = [sessionUpload uploadTaskWithRequest:request fromFile:[NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/%@", _directoryUser, fileNameForUpload]]];
     
@@ -985,7 +1081,7 @@
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
                 
                 // Send Metadata
-                NSError *error = [[NCNetworkingSync sharedManager] sendEndToEndMetadataOnServerUrl:serverUrl account:_activeAccount user:_activeUser userID:_activeUserID password:_activePassword url:_activeUrl fileNameRename:nil fileNameNewRename:nil];
+                NSError *error = [[NCNetworkingEndToEnd sharedManager] sendEndToEndMetadataOnServerUrl:serverUrl account:_activeAccount user:_activeUser userID:_activeUserID password:_activePassword url:_activeUrl fileNameRename:nil fileNameNewRename:nil];
                 
                 dispatch_async(dispatch_get_main_queue(), ^{
 
@@ -1021,10 +1117,10 @@
              // *** PLAIN ***
              [[NCManageDatabase sharedInstance] setMetadataSession:metadata.session sessionError:@"" sessionSelector:nil sessionSelectorPost:nil sessionTaskIdentifier:uploadTask.taskIdentifier predicate:[NSPredicate predicateWithFormat:@"sessionID = %@ AND account = %@", sessionID, _activeAccount]];
              
-             // OK remove record on tableQueueUpload
+#ifndef EXTENSION
+             // OK remove record on tableQueueUpload but NOT for EXTENSION Upload
              [[NCManageDatabase sharedInstance] deleteQueueUploadWithAssetLocalIdentifier:assetLocalIdentifier selector:selector];
              
-#ifndef EXTENSION
              // Next tableQueueUpload
              [(AppDelegate *)[[UIApplication sharedApplication] delegate] performSelectorOnMainThread:@selector(loadAutoDownloadUpload:) withObject:[NSNumber numberWithInt:k_maxConcurrentOperationDownloadUpload] waitUntilDone:NO];
 #endif
@@ -1042,6 +1138,12 @@
          }
     }
 
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if ([[self getDelegate:sessionID] respondsToSelector:@selector(uploadStart:task:serverUrl:)]) {
+            [[self getDelegate:sessionID] uploadStart:metadata.fileID task:uploadTask serverUrl:serverUrl];
+        }
+    });
+    
 #ifndef EXTENSION
     [(AppDelegate *)[[UIApplication sharedApplication] delegate] updateApplicationIconBadgeNumber];
 #endif
@@ -1071,7 +1173,7 @@
     
     float progress = (float) totalBytesSent / (float)totalBytesExpectedToSend;
 
-    tableMetadata *metadata = [[NCManageDatabase sharedInstance] getMetadataFromFileName:fileName directoryID:directoryID];
+    tableMetadata *metadata = [[NCManageDatabase sharedInstance] getMetadataInSessionFromFileName:fileName directoryID:directoryID];
     
     if (metadata) {
             
@@ -1151,6 +1253,8 @@
         if (metadata.directory == NO)
             [[NCManageDatabase sharedInstance] addLocalFileWithMetadata:metadata];
         
+#ifndef EXTENSION
+        
         // EXIF
         if ([metadata.typeFile isEqualToString: k_metadataTypeFile_image])
             [[CCExifGeo sharedInstance] setExifLocalTableEtag:metadata directoryUser:_directoryUser activeAccount:_activeAccount];
@@ -1158,7 +1262,7 @@
         // Create ICON
         if (metadata.directory == NO)
             [CCGraphics createNewImageFrom:metadata.fileID directoryUser:_directoryUser fileNameTo:metadata.fileID extension:[metadata.fileNameView pathExtension] size:@"m" imageForUpload:NO typeFile:metadata.typeFile writePreview:YES optimizedFileName:[CCUtility getOptimizedPhoto]];
-        
+
         // Optimization
         if (([CCUtility getUploadAndRemovePhoto] || [metadata.sessionSelectorPost isEqualToString:selectorUploadRemovePhoto]) && [metadata.typeFile isEqualToString:k_metadataTypeFile_document] == NO)
             [[NSFileManager defaultManager] removeItemAtPath:[NSString stringWithFormat:@"%@/%@", _directoryUser, metadata.fileID] error:nil];
@@ -1178,6 +1282,7 @@
                 }];
             }
         }
+#endif
         
         // Actvity
         [[NCManageDatabase sharedInstance] addActivityClient:metadata.fileNameView fileID:fileID action:k_activityDebugActionUpload selector:metadata.sessionSelector note:serverUrl type:k_activityTypeSuccess verbose:k_activityVerboseDefault activeUrl:_activeUrl];
@@ -1191,7 +1296,7 @@
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             
             if (tableLock) {
-                NSError *error = [[NCNetworkingSync sharedManager] unlockEndToEndFolderEncrypted:_activeUser userID:_activeUserID password:_activePassword url:_activeUrl serverUrl:serverUrl fileID:tableLock.fileID token:tableLock.token];
+                NSError *error = [[NCNetworkingEndToEnd sharedManager] unlockEndToEndFolderEncrypted:_activeUser userID:_activeUserID password:_activePassword url:_activeUrl serverUrl:serverUrl fileID:tableLock.fileID token:tableLock.token];
                 if (error) {
 #ifndef EXTENSION
                     dispatch_async(dispatch_get_main_queue(), ^{
@@ -1319,7 +1424,7 @@
         NSString *metadata;
         tableDirectory *directory = [[NCManageDatabase sharedInstance] getTableDirectoryWithPredicate:[NSPredicate predicateWithFormat:@"account = %@ AND serverUrl = %@", account, serverUrl]];
 
-        error = [[NCNetworkingSync sharedManager] getEndToEndMetadata:user userID:userID password:password url:url fileID:directory.fileID metadata:&metadata];
+        error = [[NCNetworkingEndToEnd sharedManager] getEndToEndMetadata:user userID:userID password:password url:url fileID:directory.fileID metadata:&metadata];
         if (error == nil) {
             if ([[NCEndToEndMetadata sharedInstance] decoderMetadata:metadata privateKey:[CCUtility getEndToEndPrivateKey:account] serverUrl:serverUrl account:account url:url] == false) {
                 *errorMessage = NSLocalizedString(@"_e2e_error_decode_metadata_", nil);
@@ -1398,6 +1503,7 @@
     self = [super init];
     
     self.priority = NSOperationQueuePriorityNormal;
+    self.sessionTaskIdentifier = -1;
     
     return self;
 }
@@ -1441,18 +1547,21 @@
     [metadataNet setKeyCipher: self.keyCipher];
     [metadataNet setOptions: self.options];
     [metadataNet setPassword: self.password];
-    [metadataNet setPathFolder: self.pathFolder];
+    [metadataNet setPath: self.path];
     [metadataNet setPriority: self.priority];
     [metadataNet setServerUrl: self.serverUrl];
     [metadataNet setServerUrlTo: self.serverUrlTo];
     [metadataNet setSelector: self.selector];
     [metadataNet setSelectorPost: self.selectorPost];
     [metadataNet setSession: self.session];
+    [metadataNet setSessionError: self.sessionError];
     [metadataNet setSessionID: self.sessionID];
+    [metadataNet setSessionTaskIdentifier: self.sessionTaskIdentifier];;
     [metadataNet setShare: self.share];
     [metadataNet setShareeType: self.shareeType];
     [metadataNet setSharePermission: self.sharePermission];
     [metadataNet setSize: self.size];
+    [metadataNet setTask: self.task];
     [metadataNet setTaskStatus: self.taskStatus];
     
     return metadataNet;

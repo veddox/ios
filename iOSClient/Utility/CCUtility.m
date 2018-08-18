@@ -516,6 +516,17 @@
     [self setEndToEndPublicKeyServer:account publicKey:nil];
 }
 
++ (BOOL)getDisableFilesApp
+{
+    return [[UICKeyChainStore stringForKey:@"disablefilesapp" service:k_serviceShareKeyChain] boolValue];
+}
+
++ (void)setDisableFilesApp:(BOOL)disable
+{
+    NSString *sDisable = (disable) ? @"true" : @"false";
+    [UICKeyChainStore setString:sDisable forKey:@"disablefilesapp" service:k_serviceShareKeyChain];
+}
+
 #pragma --------------------------------------------------------------------------------------------
 #pragma mark ===== Varius =====
 #pragma --------------------------------------------------------------------------------------------
@@ -722,9 +733,16 @@
     return fileName;
 }
 
++ (NSURL *)getDirectoryGroup
+{
+    NSURL *dirGroup = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:[NCBrandOptions sharedInstance].capabilitiesGroups];
+    return dirGroup;
+}
+
 + (NSString *)getHomeServerUrlActiveUrl:(NSString *)activeUrl
 {
-    if (activeUrl == nil) return nil;
+    if (activeUrl == nil)
+        return @"";
     
     return [activeUrl stringByAppendingString:webDAV];
 }
@@ -732,7 +750,7 @@
 // Return path of User
 + (NSString *)getDirectoryActiveUser:(NSString *)activeUser activeUrl:(NSString *)activeUrl
 {
-    NSURL *dirGroup = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:[NCBrandOptions sharedInstance].capabilitiesGroups];
+    NSURL *dirGroup = [CCUtility getDirectoryGroup];
     NSString *user = activeUser;
     NSString *baseUrl = [activeUrl lowercaseString];
     NSString *dirUserBaseUrl = nil;
@@ -757,27 +775,6 @@
     return dirUserBaseUrl;
 }
 
-+ (NSString *)getOLDDirectoryActiveUser:(NSString *)activeUser activeUrl:(NSString *)activeUrl
-{
-    NSString *user = activeUser;
-    NSString *baseUrl = [activeUrl lowercaseString];
-    NSString *dirUserBaseUrl = nil;
-    
-    if ([user length] && [baseUrl length]) {
-        
-        if ([baseUrl hasPrefix:@"https://"]) baseUrl = [baseUrl substringFromIndex:8];
-        if ([baseUrl hasPrefix:@"http://"]) baseUrl = [baseUrl substringFromIndex:7];
-        
-        dirUserBaseUrl = [NSString stringWithFormat:@"%@-%@", user, baseUrl];
-        dirUserBaseUrl = [[self removeForbiddenCharactersFileSystem:dirUserBaseUrl] lowercaseString];
-    } else return @"";
-    
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-    dirUserBaseUrl = [NSString stringWithFormat:@"%@/%@", [paths objectAtIndex:0], dirUserBaseUrl];
-    
-    return dirUserBaseUrl;
-}
-
 // Return the path of directory Documents -> NSDocumentDirectory
 + (NSString *)getDirectoryDocuments
 {
@@ -797,12 +794,20 @@
 // Return the path of directory Cetificates
 + (NSString *)getDirectoryCerificates
 {
-    NSURL *dirGroup = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:[NCBrandOptions sharedInstance].capabilitiesGroups];
+    NSURL *dirGroup = [CCUtility getDirectoryGroup];
     
     NSString *dir = [[dirGroup URLByAppendingPathComponent:appCertificates] path];
     if (![[NSFileManager defaultManager] fileExistsAtPath:dir])
         [[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
     
+    return dir;
+}
+
++ (NSString *)getDirectoryProviderStorage
+{
+    NSURL *dirGroup = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:[NCBrandOptions sharedInstance].capabilitiesGroups];
+    NSString *dir = [[dirGroup URLByAppendingPathComponent:k_DirectoryProviderStorage] path];
+
     return dir;
 }
 
@@ -828,7 +833,6 @@
 + (void)moveFileAtPath:(NSString *)atPath toPath:(NSString *)toPath
 {
     if ([[NSFileManager defaultManager] fileExistsAtPath:atPath]) {
-        
         [[NSFileManager defaultManager] removeItemAtPath:toPath error:nil];
         [[NSFileManager defaultManager] copyItemAtPath:atPath toPath:toPath error:nil];
         [[NSFileManager defaultManager] removeItemAtPath:atPath error:nil];
@@ -838,7 +842,6 @@
 + (void)copyFileAtPath:(NSString *)atPath toPath:(NSString *)toPath
 {
     if ([[NSFileManager defaultManager] fileExistsAtPath:atPath]) {
-        
         [[NSFileManager defaultManager] removeItemAtPath:toPath error:nil];
         [[NSFileManager defaultManager] copyItemAtPath:atPath toPath:toPath error:nil];
     }
@@ -997,8 +1000,11 @@
     return metadata;
 }
 
-+ (void)insertTypeFileIconName:(NSString *)fileNameView metadata:(tableMetadata *)metadata
++ (NSString *)insertTypeFileIconName:(NSString *)fileNameView metadata:(tableMetadata *)metadata
 {
+    CFStringRef fileUTI = nil;
+    NSString *returnFileUTI = nil;
+    
     if ([fileNameView isEqualToString:@"."]) {
         
         metadata.typeFile = k_metadataTypeFile_unknown;
@@ -1007,14 +1013,15 @@
     } else if (metadata.directory) {
         
         metadata.typeFile = k_metadataTypeFile_directory;
+        fileUTI = kUTTypeFolder;
         
     } else {
         
         CFStringRef fileExtension = (__bridge CFStringRef)[fileNameView pathExtension];
-        CFStringRef fileUTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, fileExtension, NULL);
         NSString *ext = (__bridge NSString *)fileExtension;
         ext = ext.uppercaseString;
-        
+        fileUTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, fileExtension, NULL);
+
         // thumbnailExists
             
         if ([ext isEqualToString:@"JPG"] || [ext isEqualToString:@"PNG"] || [ext isEqualToString:@"JPEG"] || [ext isEqualToString:@"GIF"] || [ext isEqualToString:@"BMP"] || [ext isEqualToString:@"MP3"]  || [ext isEqualToString:@"MOV"]  || [ext isEqualToString:@"MP4"]  || [ext isEqualToString:@"M4V"] || [ext isEqualToString:@"3GP"])
@@ -1022,13 +1029,8 @@
         else
             metadata.thumbnailExists = NO;
         
-        // Type compress
-        if (UTTypeConformsTo(fileUTI, kUTTypeZipArchive) && [(__bridge NSString *)fileUTI containsString:@"org.openxmlformats"] == NO && [(__bridge NSString *)fileUTI containsString:@"oasis"] == NO) {
-            metadata.typeFile = k_metadataTypeFile_compress;
-            metadata.iconName = @"file_compress";
-        }
         // Type image
-        else if (UTTypeConformsTo(fileUTI, kUTTypeImage)) {
+        if (UTTypeConformsTo(fileUTI, kUTTypeImage)) {
             metadata.typeFile = k_metadataTypeFile_image;
             metadata.iconName = @"file_photo";
         }
@@ -1068,7 +1070,11 @@
             if ([typeFile isEqualToString:@"public.html"]) {
                 metadata.iconName = @"file_code";
             }
-            
+        }
+        // Type compress
+        else if (UTTypeConformsTo(fileUTI, kUTTypeZipArchive) && [(__bridge NSString *)fileUTI containsString:@"org.openxmlformats"] == NO && [(__bridge NSString *)fileUTI containsString:@"oasis"] == NO) {
+            metadata.typeFile = k_metadataTypeFile_compress;
+            metadata.iconName = @"file_compress";
         } else {
             
             // Type unknown
@@ -1084,10 +1090,14 @@
                 metadata.iconName = @"file";
             }
         }
-        
-        if (fileUTI)
-            CFRelease(fileUTI);
     }
+    
+    if (fileUTI != nil) {
+        returnFileUTI = (__bridge NSString *)fileUTI;
+        CFRelease(fileUTI);
+    }
+    
+    return returnFileUTI;
 }
 
 + (tableMetadata *)insertFileSystemInMetadata:(NSString *)fileName fileNameView:(NSString *)fileNameView directory:(NSString *)directory activeAccount:(NSString *)activeAccount

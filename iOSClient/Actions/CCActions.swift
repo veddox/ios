@@ -99,7 +99,8 @@ class CCActions: NSObject {
             // E2EE LOCK
             let tableE2eEncryption = NCManageDatabase.sharedInstance.getE2eEncryption(predicate: NSPredicate(format: "account = %@ AND fileNameIdentifier = %@", self.appDelegate.activeAccount, metadata.fileName))
             if tableE2eEncryption != nil {
-                let error = NCNetworkingSync.sharedManager().lockEnd(toEndFolderEncrypted: self.appDelegate.activeUser, userID: self.appDelegate.activeUserID, password: self.appDelegate.activePassword, url: self.appDelegate.activeUrl, serverUrl:serverUrl, fileID: tableDirectory.fileID)
+                
+                let error = NCNetworkingEndToEnd.sharedManager().lockFolderEncrypted(self.appDelegate.activeUser, userID: self.appDelegate.activeUserID, password: self.appDelegate.activePassword, url: self.appDelegate.activeUrl, serverUrl:serverUrl, fileID: tableDirectory.fileID)
                 if error != nil {
                     DispatchQueue.main.async {
                         self.appDelegate.messageNotification("_delete_", description: error!.localizedDescription, visible: true, delay: TimeInterval(k_dismissAfterSecond), type: TWMessageBarMessageType.error, errorCode: Int(k_CCErrorInternalError))
@@ -147,9 +148,9 @@ class CCActions: NSObject {
             if tableDirectory.e2eEncrypted {
 
                 DispatchQueue.global().async {
-                    
+                                        
                     // Send Metadata
-                    let error = NCNetworkingSync.sharedManager().rebuildAndSendEndToEndMetadata(onServerUrl: metadataNet.serverUrl, account: self.appDelegate.activeAccount, user: self.appDelegate.activeUser, userID: self.appDelegate.activeUserID, password: self.appDelegate.activePassword, url: self.appDelegate.activeUrl) as NSError?
+                    let error = NCNetworkingEndToEnd.sharedManager().rebuildAndSendMetadata(onServerUrl: metadataNet.serverUrl, account: self.appDelegate.activeAccount, user: self.appDelegate.activeUser, userID: self.appDelegate.activeUserID, password: self.appDelegate.activePassword, url: self.appDelegate.activeUrl) as NSError?
                     
                     DispatchQueue.main.async {
                         if (error == nil) {
@@ -205,31 +206,27 @@ class CCActions: NSObject {
             return
         }
         
-        DispatchQueue.global(qos: .userInitiated).async {
+        // Verify if exists the fileName TO
         
-            // Verify if exists the fileName TO
-            var items: NSArray?
+        let ocNetworking = OCnetworking.init(delegate: nil, metadataNet: nil, withUser: self.appDelegate.activeUser, withUserID: self.appDelegate.activeUserID, withPassword: self.appDelegate.activePassword, withUrl: self.appDelegate.activeUrl)
         
-            guard NCNetworkingSync.sharedManager().readFile("\(String(describing: serverUrl))/\(fileName)", user: self.appDelegate.activeUser, userID: self.appDelegate.activeUserID, password: self.appDelegate.activePassword, items: &items) != nil else {
+        ocNetworking?.readFile(fileName, serverUrl: serverUrl, account: self.appDelegate.activeAccount, success: { (metadata) in
                 
-                DispatchQueue.main.async {
-                    
-                    let alertController = UIAlertController(title: NSLocalizedString("_error_", comment: ""), message: NSLocalizedString("_file_already_exists_", comment: ""), preferredStyle: UIAlertControllerStyle.alert)
+            let alertController = UIAlertController(title: NSLocalizedString("_error_", comment: ""), message: NSLocalizedString("_file_already_exists_", comment: ""), preferredStyle: UIAlertControllerStyle.alert)
                 
-                    let okAction = UIAlertAction(title: "OK", style: UIAlertActionStyle.default) {
-                        (result : UIAlertAction) -> Void in
-                    }
-                
-                    alertController.addAction(okAction)
-                
-                    delegate.present(alertController, animated: true, completion: nil)
-                }
-                
-                return;
+            let okAction = UIAlertAction(title: "OK", style: UIAlertActionStyle.default) {
+                (result : UIAlertAction) -> Void in
             }
-        
+                
+            alertController.addAction(okAction)
+                
+            delegate.present(alertController, animated: true, completion: nil)
+                
+        }, failure: { (message, errorCode) in
+                
             metadataNet.action = actionMoveFileOrFolder
             metadataNet.delegate = delegate
+            metadataNet.directory = metadata.directory
             metadataNet.fileID = metadata.fileID
             metadataNet.fileName = metadata.fileName
             metadataNet.fileNameTo = fileName
@@ -237,16 +234,17 @@ class CCActions: NSObject {
             metadataNet.selector = selectorRename
             metadataNet.serverUrl = serverUrl
             metadataNet.serverUrlTo = serverUrl
-            
+                
             self.appDelegate.addNetworkingOperationQueue(self.appDelegate.netQueue, delegate: self, metadataNet: metadataNet)
-        }
+        })
     }
     
     @objc func renameSuccess(_ metadataNet: CCMetadataNet) {
+                
+        // Rename metadata
+        _ = NCManageDatabase.sharedInstance.renameMetadata(fileNameTo: metadataNet.fileNameTo, fileID: metadataNet.fileID)
         
-        let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "fileID = %@", metadataNet.fileID))
-        
-        if metadata?.directory == true {
+        if metadataNet.directory == true {
             
             let directory = CCUtility.stringAppendServerUrl(metadataNet.serverUrl, addFileName: metadataNet.fileName)
             let directoryTo = CCUtility.stringAppendServerUrl(metadataNet.serverUrl, addFileName: metadataNet.fileNameTo)
@@ -261,7 +259,7 @@ class CCActions: NSObject {
             
         } else {
             
-            NCManageDatabase.sharedInstance.setLocalFile(fileID: metadataNet.fileID, date: nil, exifDate: nil, exifLatitude: nil, exifLongitude: nil, fileName: metadataNet.fileNameTo)
+            NCManageDatabase.sharedInstance.setLocalFile(fileID: metadataNet.fileID, date: nil, exifDate: nil, exifLatitude: nil, exifLongitude: nil, fileName: metadataNet.fileNameTo, etag: nil, etagFPE: nil)
         }
         
         metadataNet.delegate?.renameSuccess(metadataNet)

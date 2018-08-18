@@ -179,6 +179,7 @@ class tableLocalFile: Object {
     @objc dynamic var account = ""
     @objc dynamic var date = NSDate()
     @objc dynamic var etag = ""
+    @objc dynamic var etagFPE = ""
     @objc dynamic var exifDate = NSDate()
     @objc dynamic var exifLatitude = ""
     @objc dynamic var exifLongitude = ""
@@ -206,6 +207,7 @@ class tableMetadata: Object {
     @objc dynamic var fileName = ""
     @objc dynamic var fileNameView = ""
     @objc dynamic var iconName = ""
+    @objc dynamic var path = ""
     @objc dynamic var permissions = ""
     @objc dynamic var session = ""
     @objc dynamic var sessionError = ""
@@ -260,12 +262,19 @@ class tableQueueUpload: Object {
     @objc dynamic var account = ""
     @objc dynamic var assetLocalIdentifier = ""
     @objc dynamic var date = NSDate()
+    @objc dynamic var errorCode: Int = 0
     @objc dynamic var fileName = ""
+    @objc dynamic var fileNameView = ""
     @objc dynamic var lock: Bool = false
+    @objc dynamic var path: String?
     @objc dynamic var selector = ""
     @objc dynamic var selectorPost = ""
     @objc dynamic var serverUrl = ""
     @objc dynamic var session = ""
+    @objc dynamic var sessionError = ""
+    @objc dynamic var sessionID = ""
+    @objc dynamic var sessionTaskIdentifier: Int = -1
+    @objc dynamic var size: Double = 0
 }
 
 class tableShare: Object {
@@ -275,4 +284,15 @@ class tableShare: Object {
     @objc dynamic var serverUrl = ""
     @objc dynamic var shareLink = ""
     @objc dynamic var shareUserAndGroup = ""
+}
+
+class tableTag: Object {
+    
+    @objc dynamic var account = ""
+    @objc dynamic var fileID = ""
+    @objc dynamic var tagIOS: Data? = nil
+    
+    override static func primaryKey() -> String {
+        return "fileID"
+    }
 }
