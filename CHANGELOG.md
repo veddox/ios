@@ -5,7 +5,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### [2.22.0] - 2018-xx-xx
+
+### [2.22.4] - 2018-xx-xx
+- See https://github.com/nextcloud/ios/milestone/39
+
+## [2.22.3] - 2018-09-07
+- See https://github.com/nextcloud/ios/milestone/38
+- Scan documents and create multipage pdfs or jpg
+
+## [2.22.2] - 2018-08-28
+- See https://github.com/nextcloud/ios/milestone/37
+
+## [2.22.1] - 2018-08-21
+- See https://github.com/nextcloud/ios/milestone/36
+
+## [2.22.0] - 2018-08-20
 - See https://github.com/nextcloud/ios/milestone/32
 
 ## [2.21.3] - 2018-06-30

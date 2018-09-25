@@ -52,10 +52,6 @@
 //Url to access to Capabilities API
 #define k_url_capabilities @"ocs/v1.php/cloud/capabilities"
 
-//Url to access to Remote Thumbnails
-//api/v1/thumbnail/{x}/{y}/{file}
-#define k_url_thumbnails @"index.php/apps/files/api/v1/thumbnail"
-
 //Url to access to Remote Notification API
 #define k_url_acces_remote_notification_api @"ocs/v2.php/apps/notifications/api/v2/notifications"
 
@@ -73,6 +69,9 @@
 
 //Url to access to End To End Encryption API
 #define k_url_client_side_encryption @"ocs/v2.php/apps/end_to_end_encryption/api/v1"
+
+//Url to access to Mobile Editor OCS API
+#define k_url_create_link_mobile_editor @"ocs/v2.php/apps/richdocuments/api/v1/document"
 
 //Version of the server that have share API
 #define k_version_support_shared [NSArray arrayWithObjects:  @"5", @"0", @"27", nil]
@@ -110,6 +109,10 @@
 //Name of the container to configure NSURLSessions
 #define k_shared_container_identifier @"group.com.owncloud.iOSmobileapp";
 
+// Quota return value
+#define k_quota_space_not_computed  -1
+#define k_quota_space_unknown       -2
+#define k_quota_space_unlimited     -3
 
 
 

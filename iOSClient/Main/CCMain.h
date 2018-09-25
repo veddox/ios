@@ -41,7 +41,6 @@
 #import "CTAssetsPickerController.h"
 #import "CCShareOC.h"
 #import "CCShareInfoCMOC.h"
-#import "CCNetworking.h"
 #import "CCMove.h"
 #import "CCGraphics.h"
 #import "CCSection.h"
@@ -52,13 +51,12 @@
 
 @class tableMetadata;
 
-@interface CCMain : UIViewController <UITableViewDataSource, UITableViewDelegate, UIActionSheetDelegate, UIGestureRecognizerDelegate, UIDocumentInteractionControllerDelegate, UIViewControllerPreviewingDelegate, CCMoveDelegate, CTAssetsPickerControllerDelegate, BKPasscodeViewControllerDelegate, UISplitViewControllerDelegate, UIPopoverControllerDelegate, CCNetworkingDelegate, CCShareOCDelegate, CCPeekPopDelegate, UIDocumentMenuDelegate, UIDocumentPickerDelegate, UISearchResultsUpdating, UISearchControllerDelegate, UISearchBarDelegate, UIScrollViewDelegate, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate>
+@interface CCMain : UIViewController <UITableViewDataSource, UITableViewDelegate, UIActionSheetDelegate, UIGestureRecognizerDelegate, UIDocumentInteractionControllerDelegate, UIViewControllerPreviewingDelegate, CCMoveDelegate, CTAssetsPickerControllerDelegate, BKPasscodeViewControllerDelegate, UISplitViewControllerDelegate, UIPopoverControllerDelegate, CCShareOCDelegate, CCPeekPopDelegate, UIDocumentMenuDelegate, UIDocumentPickerDelegate, UISearchResultsUpdating, UISearchControllerDelegate, UISearchBarDelegate, UIScrollViewDelegate, DZNEmptyDataSetSource, DZNEmptyDataSetDelegate>
 
 @property (nonatomic, weak) IBOutlet UITableView *tableView;
-@property (nonatomic, strong) UIRefreshControl *refreshControl;
+@property (nonatomic, strong) tableMetadata *metadata;
 @property (nonatomic, strong) NSString *serverUrl;
 @property (nonatomic, strong) NSString *titleMain;
-@property (nonatomic, strong) NSString *textBackButton;
 @property (nonatomic, weak) CCShareOC *shareOC;
 @property (nonatomic, weak) CCDetail *detailViewController;
 @property (nonatomic, strong) UISearchController *searchController;
@@ -67,9 +65,15 @@
 @property (nonatomic, strong) UIImage *imageTitle;
 @property BOOL isSelectedMode;
 
+- (void)openIn:(tableMetadata *)metadata;
+
+- (void)shouldPerformSegue;
+
+- (void)saveToPhotoAlbum:(tableMetadata *)metadata;
+
+- (void)copyFileToPasteboard:(tableMetadata *)metadata;
 
 - (void)closeAllMenu;
-- (void)returnCreate:(NSInteger)type;
 
 - (void)setUINavigationBarDefault;
 
@@ -78,16 +82,15 @@
 
 - (void)uploadFileAsset:(NSMutableArray *)assets serverUrl:(NSString *)serverUrl useSubFolder:(BOOL)useSubFolder session:(NSString *)session;
 
-- (void)reloadTaskButton:(tableMetadata *)metadata;
-- (void)cancelTaskButton:(tableMetadata *)metadata reloadTable:(BOOL)reloadTable;
-- (void)stopTaskButton:(tableMetadata *)metadata;
-
-- (void)reloadDatasource;
-- (void)reloadDatasource:(NSString *)serverUrl;
+- (void)reloadDatasource:(NSString *)serverUrl fileID:(NSString *)fileID action:(NSInteger)action;
 
 - (void)openWindowShare:(tableMetadata *)metadata;
 - (void)clearDateReadDataSource:(NSNotification *)notification;
 - (void)cancelSearchBar;
+
+- (void)openAssetsPickerController;
+- (void)openImportDocumentPicker;
+- (void)createFolder;
 
 @end
 

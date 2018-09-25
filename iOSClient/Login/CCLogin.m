@@ -31,14 +31,6 @@
 {
     AppDelegate *appDelegate;
     UIView *rootView;
-    
-    NSString *serverProductName;
-    NSString *serverVersion;
-    NSString *serverVersionString;
-    
-    NSInteger versionMajor;
-    NSInteger versionMicro;
-    NSInteger versionMinor;
 }
 @end
 
@@ -61,7 +53,7 @@
     self.annulla.tintColor = [NCBrandColor sharedInstance].customerText;
     
     // Base URL
-    _imageBaseUrl.image = [CCGraphics changeThemingColorImage:[UIImage imageNamed:@"loginURL"] color:[NCBrandColor sharedInstance].customerText];
+    _imageBaseUrl.image = [CCGraphics changeThemingColorImage:[UIImage imageNamed:@"loginURL"] multiplier:2 color:[NCBrandColor sharedInstance].customerText];
     _baseUrl.textColor = [NCBrandColor sharedInstance].customerText;
     _baseUrl.tintColor = [NCBrandColor sharedInstance].customerText;
     _baseUrl.placeholder = NSLocalizedString(@"_login_url_", nil);
@@ -74,7 +66,7 @@
     self.loadingBaseUrl.hidden = YES;
     
     // User
-    _imageUser.image = [CCGraphics changeThemingColorImage:[UIImage imageNamed:@"loginUser"] color:[NCBrandColor sharedInstance].customerText];
+    _imageUser.image = [CCGraphics changeThemingColorImage:[UIImage imageNamed:@"loginUser"] multiplier:2 color:[NCBrandColor sharedInstance].customerText];
     _user.textColor = [NCBrandColor sharedInstance].customerText;
     _user.tintColor = [NCBrandColor sharedInstance].customerText;
     _user.placeholder = NSLocalizedString(@"_username_", nil);
@@ -83,7 +75,7 @@
     [self.user setDelegate:self];
 
     // Password
-    _imagePassword.image = [CCGraphics changeThemingColorImage:[UIImage imageNamed:@"loginPassword"] color:[NCBrandColor sharedInstance].customerText];
+    _imagePassword.image = [CCGraphics changeThemingColorImage:[UIImage imageNamed:@"loginPassword"] multiplier:2 color:[NCBrandColor sharedInstance].customerText];
     _password.textColor = [NCBrandColor sharedInstance].customerText;
     _password.tintColor = [NCBrandColor sharedInstance].customerText;
     _password.placeholder = NSLocalizedString(@"_password_", nil);
@@ -92,36 +84,39 @@
     [self.password setDelegate:self];
 
     // Login
-    [self.login setTitle:NSLocalizedString(@"_login_", nil) forState:UIControlStateNormal];
+    [self.login setTitle:[NSLocalizedString(@"_login_", nil) uppercaseString] forState:UIControlStateNormal] ;
     self.login.backgroundColor = [NCBrandColor sharedInstance].customerText;
-    self.login.tintColor = [NCBrandColor sharedInstance].customer;
+    self.login.tintColor = [UIColor blackColor];
+//    self.login.layer.cornerRadius = 3;
+//    self.login.clipsToBounds = YES;
     
     // Type view
     [self.loginTypeView setTitle:NSLocalizedString(@"_traditional_login_", nil) forState:UIControlStateNormal];
-    [self.loginTypeView setTitleColor:[NCBrandColor sharedInstance].customerText forState:UIControlStateNormal];
+    [self.loginTypeView setTitleColor:[UIColor lightGrayColor] forState:UIControlStateNormal];
 
-    // Bottom label
-    self.bottomLabel.text = NSLocalizedString([NCBrandOptions sharedInstance].textLoginProvider, nil);
-    self.bottomLabel.userInteractionEnabled = YES;
+    // Preferred providers
+    self.preferredProviders.text = NSLocalizedString([NCBrandOptions sharedInstance].textLoginProvider, nil);
+    self.preferredProviders.textColor = [UIColor whiteColor];
+    self.preferredProviders.userInteractionEnabled = YES;
     if ([NCBrandOptions sharedInstance].disable_linkLoginProvider) {
-        self.bottomLabel.hidden = YES;
+        self.preferredProviders.hidden = YES;
     }
     
-    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tabBottomLabel)];
-    [self.bottomLabel addGestureRecognizer:tapGesture];
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(loginPreferredProviders)];
+    [self.preferredProviders addGestureRecognizer:tapGesture];
     
     if (self.view.frame.size.width == ([[UIScreen mainScreen] bounds].size.width*([[UIScreen mainScreen] bounds].size.width<[[UIScreen mainScreen] bounds].size.height))+([[UIScreen mainScreen] bounds].size.height*([[UIScreen mainScreen] bounds].size.width>[[UIScreen mainScreen] bounds].size.height))) {
         
         // Portrait
         if ([NCBrandOptions sharedInstance].disable_linkLoginProvider == NO)
-            self.bottomLabel.hidden = NO;
+            self.preferredProviders.hidden = NO;
         self.loginTypeView.hidden = NO;
         
     } else {
         
         // Landscape
         if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad) {
-            self.bottomLabel.hidden = YES;
+            self.preferredProviders.hidden = YES;
             self.loginTypeView.hidden = YES;
         }
     }
@@ -133,7 +128,7 @@
         _baseUrl.hidden = YES;
     }
 
-    if (_loginType == loginAdd) {
+    if (_loginType == k_login_Add ) {
         // Login Flow ?
         _imageUser.hidden = YES;
         _user.hidden = YES;
@@ -141,7 +136,7 @@
         _password.hidden = YES;
     }
     
-    if (_loginType == loginAddForced) {
+    if (_loginType == k_login_Add_Forced) {
         _annulla.hidden = YES;
         // Login Flow ?
         _imageUser.hidden = YES;
@@ -150,7 +145,7 @@
         _password.hidden = YES;
     }
     
-    if (_loginType == loginModifyPasswordUser) {
+    if (_loginType == k_login_Modify_Password) {
         _baseUrl.text = appDelegate.activeUrl;
         _baseUrl.userInteractionEnabled = NO;
         _baseUrl.textColor = [UIColor lightGrayColor];
@@ -165,7 +160,7 @@
     [super viewWillAppear:animated];
 
     // verify URL
-    if (_loginType == loginModifyPasswordUser && [self.baseUrl.text length] > 0)
+    if (_loginType == k_login_Modify_Password && [self.baseUrl.text length] > 0)
         [self testUrl];
 }
 
@@ -195,31 +190,20 @@
             
             // Portrait
             if ([NCBrandOptions sharedInstance].disable_linkLoginProvider == NO)
-                self.bottomLabel.hidden = NO;
+                self.preferredProviders.hidden = NO;
             self.loginTypeView.hidden = NO;
             
         } else {
             
             // Landscape
             if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad) {
-                self.bottomLabel.hidden = YES;
+                self.preferredProviders.hidden = YES;
                 self.loginTypeView.hidden = YES;
             }
         }
     }];
     
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
-}
-
-- (void)dismissViewControllerAnimated:(BOOL)flag completion:(void (^)(void))completion
-{
-    [super dismissViewControllerAnimated:flag completion:completion];
- 
-    NSArray *callStack = [NSThread callStackSymbols];
-    NSString *callParent = [callStack objectAtIndex:1];
-
-    if ([callParent containsString:@"CCLogin"])
-        [self.delegate loginClose];
 }
 
 #pragma --------------------------------------------------------------------------------------------
@@ -240,77 +224,55 @@
     if ([self.baseUrl.text hasSuffix:@"/"])
         self.baseUrl.text = [self.baseUrl.text substringToIndex:[self.baseUrl.text length] - 1];
     
-    // add status.php for valid test url
-    NSString *urlTest = [self.baseUrl.text stringByAppendingString:serverStatus];
-    
-    // Remove stored cookies
-    NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-    for (NSHTTPCookie *cookie in [storage cookies])
-    {
-        [storage deleteCookie:cookie];
-    }
-    
-    NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlTest] cachePolicy:0 timeoutInterval:20.0];
-    [request addValue:[CCUtility getUserAgent] forHTTPHeaderField:@"User-Agent"];
-    [request addValue:@"true" forHTTPHeaderField:@"OCS-APIRequest"];
-
-    NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
-    NSURLSession *session = [NSURLSession sessionWithConfiguration:configuration delegate:self delegateQueue:nil];
+    OCnetworking *ocNetworking = [[OCnetworking alloc] initWithDelegate:self metadataNet:nil withUser:@"" withUserID:@"" withPassword:@"" withUrl:nil];
+    [ocNetworking serverStatus:self.baseUrl.text success:^(NSString *serverProductName, NSInteger versionMajor, NSInteger versionMicro, NSInteger versionMinor) {
         
-    NSURLSessionDataTask *task = [session dataTaskWithRequest:request completionHandler: ^(NSData *data, NSURLResponse *response, NSError *error) {
+        self.loadingBaseUrl.hidden = YES;
+        self.login.enabled = YES;
+        
+        // Login Flow
+        if (_user.hidden && _password.hidden && versionMajor >= k_flow_version_available) {
             
-        dispatch_async(dispatch_get_main_queue(), ^{
-                
-            self.loadingBaseUrl.hidden = YES;
-            self.login.enabled = YES;
+            appDelegate.activeLoginWeb = [CCLoginWeb new];
+            appDelegate.activeLoginWeb.loginType = _loginType;
+            appDelegate.activeLoginWeb.delegate = self;
+            appDelegate.activeLoginWeb.urlBase = self.baseUrl.text;
             
-            if (error) {
-                    
-                if ([error code] == NSURLErrorServerCertificateUntrusted) {
-                        
-                    [[CCCertificate sharedManager] presentViewControllerCertificateWithTitle:[error localizedDescription] viewController:self delegate:self];
-                        
-                } else {
-                        
-                    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"_connection_error_", nil) message:[error localizedDescription] preferredStyle:UIAlertControllerStyleAlert];
-                    UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"_ok_", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {}];
-                        
-                    [alertController addAction:okAction];
-                    [self presentViewController:alertController animated:YES completion:nil];
-                }
-
-            } else {
-                    
-                [self serverStatus:data];
-                
-                // Login Flow
-                if (_user.hidden && _password.hidden && versionMajor >= k_flow_version_available) {
-                    
-                    appDelegate.activeLoginWeb = [CCLoginWeb new];
-                    appDelegate.activeLoginWeb.loginType = _loginType;
-                    appDelegate.activeLoginWeb.delegate = self;
-                    appDelegate.activeLoginWeb.urlBase = self.baseUrl.text;
-                    
-                    [appDelegate.activeLoginWeb presentModalWithDefaultTheme:self];
-                }
-                
-                // NO Login Flow available
-                if (versionMajor < k_flow_version_available) {
-                    
-                    [self.loginTypeView setHidden:YES];
-
-                    _imageUser.hidden = NO;
-                    _user.hidden = NO;
-                    _imagePassword.hidden = NO;
-                    _password.hidden = NO;
-                    
-                    [_user becomeFirstResponder];
-                }
-            }
-        });
+            [appDelegate.activeLoginWeb presentModalWithDefaultTheme:self];
+        }
+        
+        // NO Login Flow available
+        if (versionMajor < k_flow_version_available) {
+            
+            [self.loginTypeView setHidden:YES];
+            
+            _imageUser.hidden = NO;
+            _user.hidden = NO;
+            _imagePassword.hidden = NO;
+            _password.hidden = NO;
+            
+            [_user becomeFirstResponder];
+        }
+        
+    } failure:^(NSString *message, NSInteger errorCode) {
+        
+        self.loadingBaseUrl.hidden = YES;
+        self.login.enabled = YES;
+        
+        if (errorCode == NSURLErrorServerCertificateUntrusted) {
+            
+            [[CCCertificate sharedManager] presentViewControllerCertificateWithTitle:message viewController:self delegate:self];
+            
+        } else {
+            
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"_connection_error_", nil) message:message preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"_ok_", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {}];
+            
+            [alertController addAction:okAction];
+            [self presentViewController:alertController animated:YES completion:nil];
+        }
+        
     }];
-        
-    [task resume];
 }
 
 - (void)trustedCerticateAccepted
@@ -320,47 +282,8 @@
 
 - (void)trustedCerticateDenied
 {
-    if (_loginType == loginModifyPasswordUser)
+    if (_loginType == k_login_Modify_Password)
         [self handleAnnulla:self];
-}
-
--(void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler
-{
-    // The pinnning check
-    
-    if ([[CCCertificate sharedManager] checkTrustedChallenge:challenge]) {
-        completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
-    } else {
-        completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
-    }
-}
-
-- (void)serverStatus:(NSData *)data
-{
-    serverProductName = @"";
-    serverVersion = @"0.0.0";
-    serverVersionString = @"0.0.0";
-    
-    versionMajor = 0;
-    versionMicro = 0;
-    versionMinor = 0;
-    
-    NSError *error;
-    NSDictionary *jsongParsed = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
-    
-    if (error)
-        return;
-    
-    serverProductName = [jsongParsed valueForKey:@"productname"];
-    serverVersion = [jsongParsed valueForKey:@"version"];
-    serverVersionString = [jsongParsed valueForKey:@"versionstring"];
-
-    NSArray *arrayVersion = [serverVersionString componentsSeparatedByString:@"."];
-    if (arrayVersion.count >= 3) {
-        versionMajor = [arrayVersion[0] integerValue];
-        versionMicro = [arrayVersion[1] integerValue];
-        versionMinor = [arrayVersion[2] integerValue];
-    }
 }
 
 #pragma --------------------------------------------------------------------------------------------
@@ -392,10 +315,8 @@
     [self.delegate loginSuccess:_loginType];
 }
 
-- (void)loginWebClose
-{
-    appDelegate.activeLoginWeb = nil;
-   
+- (void)webDismiss
+{   
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -403,9 +324,15 @@
 #pragma mark == Action ==
 #pragma --------------------------------------------------------------------------------------------
 
-- (void)tabBottomLabel
+- (void)loginPreferredProviders
 {
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NCBrandOptions sharedInstance].linkLoginProvider]];
+//    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:[NCBrandOptions sharedInstance].linkLoginProvider]];
+    appDelegate.activeLoginWeb = [CCLoginWeb new];
+    appDelegate.activeLoginWeb.loginType = _loginType;
+    appDelegate.activeLoginWeb.delegate = self;
+    appDelegate.activeLoginWeb.urlBase = [[NCBrandOptions sharedInstance] loginPreferredProviders];
+        
+    [appDelegate.activeLoginWeb presentModalWithDefaultTheme:self];
 }
 
 - (IBAction)handlebaseUrlchange:(id)sender
@@ -435,12 +362,12 @@
         self.login.enabled = NO;
         self.loadingBaseUrl.hidden = NO;
 
-        [ocNetworking checkServer:[NSString stringWithFormat:@"%@%@", url, webDAV] success:^{
+        [ocNetworking checkServer:[NSString stringWithFormat:@"%@%@", url, k_webDAV] success:^{
             
             // account
             NSString *account = [NSString stringWithFormat:@"%@ %@", user, url];
             
-            if (_loginType == loginModifyPasswordUser) {
+            if (_loginType == k_login_Modify_Password) {
                 
                 // Change Password
                 tableAccount *tbAccount = [[NCManageDatabase sharedInstance] setAccountPassword:account password:password];
@@ -453,6 +380,10 @@
                 [self dismissViewControllerAnimated:YES completion:nil];
                 
             } else {
+                
+                // LOGOUT
+                
+                [appDelegate unsubscribingNextcloudServerPushNotification];
                 
                 [[NCManageDatabase sharedInstance] deleteAccount:account];
                 [[NCManageDatabase sharedInstance] addAccount:account url:url user:user password:password loginFlow:false];
@@ -524,6 +455,16 @@
         _password.hidden = YES;
         
         [self.loginTypeView setTitle:NSLocalizedString(@"_traditional_login_", nil) forState:UIControlStateNormal];
+    }
+}
+
+-(void)URLSession:(NSURLSession *)session didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler
+{
+    // The pinnning check
+    if ([[CCCertificate sharedManager] checkTrustedChallenge:challenge]) {
+        completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
+    } else {
+        completionHandler(NSURLSessionAuthChallengePerformDefaultHandling, nil);
     }
 }
 

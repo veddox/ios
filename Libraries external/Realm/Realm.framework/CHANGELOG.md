@@ -1,3 +1,59 @@
+3.7.6 Release notes (2018-08-08)
+=============================================================
+
+### Enhancements
+
+* Speed up the actual compaction when using compact-on-launch.
+* Reduce memory usage when locally merging changes from sync.
+* When first connecting to a server, wait to begin uploading changes until
+  after all changes have been downloaded to reduce the server-side load for
+  query-based sync.
+
+3.7.5 Release notes (2018-07-23)
+=============================================================
+
+### Enhancements
+
+* Improve performance of applying remote changesets from sync.
+* Improve performance of creating objects with string primary keys.
+* Improve performance of large write transactions.
+* Adjust file space allocation strategy to reduce fragmentation, producing
+  smaller Realm files and typically better performance.
+* Close network connections immediately when a sync session is destroyed.
+* Report more information in `InvalidDatabase` exceptions.
+
+### Bugfixes
+
+* Fix permission denied errors for RLMPlatform.h when building with CocoaPods
+  and Xcode 10 beta 3.
+* Fix a use-after-free when canceling a write transaction which could result in
+  incorrect "before" values in KVO observations (typically `nil` when a non-nil
+  value is expected).
+* Fix several bugs in the merge algorithm that could lead to memory corruption
+  and crashes with errors like "bad changeset" and "unreachable code".
+
+3.7.4 Release notes (2018-06-19)
+=============================================================
+
+### Bugfixes
+
+* Fix a bug which could potentially flood Realm Object Server with PING
+  messages after a client device comes back online.
+
+3.7.3 Release notes (2018-06-18)
+=============================================================
+
+### Enhancements
+
+* Avoid performing potentially large amounts of pointless background work for
+  LinkingObjects instances which are accessed and then not immediate deallocated.
+
+### Bugfixes
+
+* Fix crashes which could result from extremely fragmented Realm files.
+* Fix a bug that could result in a crash with the message "bad changeset error"
+  when merging changesets from the server.
+
 3.7.2 Release notes (2018-06-13)
 =============================================================
 

@@ -46,36 +46,58 @@ class NCManageAutoUploadFileName: XLFormViewController {
         var section : XLFormSectionDescriptor
         var row : XLFormRowDescriptor
 
-        // Section: Add File Name Type
-        
-        section = XLFormSectionDescriptor.formSection()
+        // Section Mode filename
+
+        section = XLFormSectionDescriptor.formSection(withTitle: NSLocalizedString("_mode_filename_", comment: ""))
         form.addFormSection(section)
         
-        row = XLFormRowDescriptor(tag: "addFileNameType", rowType: XLFormRowDescriptorTypeBooleanSwitch, title: NSLocalizedString("_filenametype_photo_video_", comment: ""))
-        row.value = CCUtility.getFileNameType(k_keyFileNameAutoUploadType)
+        // Maintain the original fileName
+        
+        row = XLFormRowDescriptor(tag: "maintainOriginalFileName", rowType: XLFormRowDescriptorTypeBooleanSwitch, title: NSLocalizedString("_maintain_original_filename_", comment: ""))
+        row.value = CCUtility.getOriginalFileName(k_keyFileNameOriginalAutoUpload)
+
+        row.cellConfig["textLabel.font"] = UIFont.systemFont(ofSize: 15.0)
+
         section.addFormRow(row)
         
+        // Add File Name Type
+        
+        row = XLFormRowDescriptor(tag: "addFileNameType", rowType: XLFormRowDescriptorTypeBooleanSwitch, title: NSLocalizedString("_add_filenametype_", comment: ""))
+        row.value = CCUtility.getFileNameType(k_keyFileNameAutoUploadType)
+        row.hidden = "$\("maintainOriginalFileName") == 1"
+
+        row.cellConfig["textLabel.font"] = UIFont.systemFont(ofSize: 15.0)
+
+        section.addFormRow(row)
+                
         // Section: Rename File Name
         
-        section = XLFormSectionDescriptor.formSection()
+        section = XLFormSectionDescriptor.formSection(withTitle: NSLocalizedString("_filename_", comment: ""))
         form.addFormSection(section)
         
-        row = XLFormRowDescriptor(tag: "maskFileName", rowType: XLFormRowDescriptorTypeAccount, title: NSLocalizedString("_filename_", comment: ""))
-        
+        row = XLFormRowDescriptor(tag: "maskFileName", rowType: XLFormRowDescriptorTypeAccount, title: (NSLocalizedString("_filename_", comment: "")))
         let fileNameMask : String = CCUtility.getFileNameMask(k_keyFileNameAutoUploadMask)
         if fileNameMask.count > 0 {
             row.value = fileNameMask
         }
+        row.hidden = "$\("maintainOriginalFileName") == 1"
+        
+        row.cellConfig["textLabel.font"] = UIFont.systemFont(ofSize: 15.0)
+        
+        row.cellConfig["textField.textAlignment"] = NSTextAlignment.right.rawValue
+        row.cellConfig["textField.font"] = UIFont.systemFont(ofSize: 15.0)
+        
         section.addFormRow(row)
         
         // Section: Preview File Name
         
         row = XLFormRowDescriptor(tag: "previewFileName", rowType: XLFormRowDescriptorTypeTextView, title: "")
         row.height = 180
-        row.cellConfig.setObject(NCBrandColor.sharedInstance.backgroundView, forKey: "backgroundColor" as NSCopying)
-        row.cellConfig.setObject(NCBrandColor.sharedInstance.backgroundView, forKey: "textView.backgroundColor" as NSCopying)
-        
         row.disabled = true
+        
+        row.cellConfig["textView.backgroundColor"] = NCBrandColor.sharedInstance.backgroundView
+        row.cellConfig["textView.font"] = UIFont.systemFont(ofSize: 14.0)
+        
         section.addFormRow(row)
         
         self.form = form
@@ -87,6 +109,10 @@ class NCManageAutoUploadFileName: XLFormViewController {
         
         if formRow.tag == "addFileNameType" {
             CCUtility.setFileNameType((formRow.value! as AnyObject).boolValue, key: k_keyFileNameAutoUploadType)
+            self.reloadForm()
+        }
+        else if formRow.tag == "maintainOriginalFileName" {
+            CCUtility.setOriginalFileName((formRow.value! as AnyObject).boolValue, key:k_keyFileNameOriginalAutoUpload)
             self.reloadForm()
         }
         else if formRow.tag == "maskFileName" {
@@ -131,9 +157,7 @@ class NCManageAutoUploadFileName: XLFormViewController {
         self.navigationController?.navigationBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor: NCBrandColor.sharedInstance.brandText]
         
         self.tableView.separatorStyle = UITableViewCellSeparatorStyle.none
-        
-        self.tableView.backgroundColor = NCBrandColor.sharedInstance.backgroundView
-        
+                
         self.reloadForm()
     }
     
@@ -149,46 +173,17 @@ class NCManageAutoUploadFileName: XLFormViewController {
         self.form.delegate = self
     }
     
-    //MARK: TableView
-    
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        
-        switch section {
-            
-        case 0:
-            return "    " + NSLocalizedString("_add_filenametype_", comment: "")
-        case 1:
-            return "    " + NSLocalizedString("_rename_filename_", comment: "")
-        case 2:
-            return String(format: NSLocalizedString("_preview_filename_", comment: ""), "MM,MMM,DD,YY,YYYY and HH,hh,mm,ss,ampm")
-        default:
-            return ""
-        }
-    }
-    
-    override func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-        
-        switch section {
-            
-            /*
-             case 2:
-             let buttonDestinationFolder : XLFormRowDescriptor  = self.form.formRow(withTag: "maskFileName")!
-             let text = self.writePreviewFileName(buttonDestinationFolder)
-             return text
-             */
-            
-        default:
-            return ""
-        }
-    }
-    
     // MARK: - Utility
     
     func previewFileName(valueRename : String?) -> String {
         
         var returnString : String = ""
         
-        if let valueRename = valueRename {
+        if CCUtility.getOriginalFileName(k_keyFileNameOriginalAutoUpload) {
+            
+            return (NSLocalizedString("_filename_", comment: "") + ": IMG_0001.JPG")
+            
+        } else if let valueRename = valueRename {
             
             let valueRenameTrimming = valueRename.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
             
@@ -198,18 +193,18 @@ class NCManageAutoUploadFileName: XLFormViewController {
                 CCUtility.setFileNameMask(valueRename, key: k_keyFileNameAutoUploadMask)
                 self.form.delegate = self
                 
-                returnString = CCUtility.createFileName("IMG_0001.JPG", fileDate: dateExample, fileType: PHAssetMediaType.image, keyFileName: k_keyFileNameAutoUploadMask, keyFileNameType: k_keyFileNameAutoUploadType)
+                returnString = CCUtility.createFileName("IMG_0001.JPG", fileDate: dateExample, fileType: PHAssetMediaType.image, keyFileName: k_keyFileNameAutoUploadMask, keyFileNameType: k_keyFileNameAutoUploadType, keyFileNameOriginal: k_keyFileNameOriginalAutoUpload)
 
             } else {
                 
                 CCUtility.setFileNameMask("", key: k_keyFileNameAutoUploadMask)
-                returnString = CCUtility.createFileName("IMG_0001.JPG", fileDate: dateExample, fileType: PHAssetMediaType.image, keyFileName: nil, keyFileNameType: k_keyFileNameAutoUploadType)
+                returnString = CCUtility.createFileName("IMG_0001.JPG", fileDate: dateExample, fileType: PHAssetMediaType.image, keyFileName: nil, keyFileNameType: k_keyFileNameAutoUploadType, keyFileNameOriginal: k_keyFileNameOriginalAutoUpload)
             }
             
         } else {
             
             CCUtility.setFileNameMask("", key: k_keyFileNameAutoUploadMask)
-            returnString = CCUtility.createFileName("IMG_0001.JPG", fileDate: dateExample, fileType: PHAssetMediaType.image, keyFileName: nil, keyFileNameType: k_keyFileNameAutoUploadType)
+            returnString = CCUtility.createFileName("IMG_0001.JPG", fileDate: dateExample, fileType: PHAssetMediaType.image, keyFileName: nil, keyFileNameType: k_keyFileNameAutoUploadType, keyFileNameOriginal: k_keyFileNameOriginalAutoUpload)
         }
         
         return String(format: NSLocalizedString("_preview_filename_", comment: ""), "MM,MMM,DD,YY,YYYY and HH,hh,mm,ss,ampm") + ":" + "\n\n" + returnString

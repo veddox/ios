@@ -35,7 +35,7 @@ class NCService: NSObject, OCNetworkingDelegate {
     //MARK: -
     //MARK: Start Services API NC
     
-    @objc func startRequestServicesServer() {
+    @objc public func startRequestServicesServer() {
    
         if (appDelegate.activeAccount == nil || appDelegate.activeAccount.count == 0 || appDelegate.maintenanceMode == true) {
             return
@@ -44,12 +44,13 @@ class NCService: NSObject, OCNetworkingDelegate {
         self.requestUserProfile()
         self.requestServerCapabilities()
         self.requestActivityServer()
+        self.requestServerStatus()
     }
 
     //MARK: -
-    //MARK: Request Service API NC
+    //MARK: Internal request Service API NC
     
-    @objc func requestServerCapabilities() {
+    private func requestServerCapabilities() {
         
         if (appDelegate.activeAccount == nil || appDelegate.activeAccount.count == 0 || appDelegate.maintenanceMode == true) {
             return
@@ -63,7 +64,7 @@ class NCService: NSObject, OCNetworkingDelegate {
         appDelegate.addNetworkingOperationQueue(appDelegate.netQueue, delegate: self, metadataNet: metadataNet)
     }
     
-    @objc func requestUserProfile() {
+    private func requestUserProfile() {
         
         if (appDelegate.activeAccount == nil || appDelegate.activeAccount.count == 0 || appDelegate.maintenanceMode == true) {
             return
@@ -77,7 +78,7 @@ class NCService: NSObject, OCNetworkingDelegate {
         appDelegate.addNetworkingOperationQueue(appDelegate.netQueue, delegate: self, metadataNet: metadataNet)
     }
     
-    @objc func requestActivityServer() {
+    private func requestActivityServer() {
         
         if (appDelegate.activeAccount == nil || appDelegate.activeAccount.count == 0 || appDelegate.maintenanceMode == true) {
             return
@@ -91,7 +92,7 @@ class NCService: NSObject, OCNetworkingDelegate {
         appDelegate.addNetworkingOperationQueue(appDelegate.netQueue, delegate: self, metadataNet: metadataNet)
     }
     
-    @objc func middlewarePing() {
+    @objc public func middlewarePing() {
         
         if (appDelegate.activeAccount == nil || appDelegate.activeAccount.count == 0 || appDelegate.maintenanceMode == true) {
             return
@@ -105,6 +106,22 @@ class NCService: NSObject, OCNetworkingDelegate {
         metadataNet.serverUrl = NCBrandOptions.sharedInstance.middlewarePingUrl
         
         //appDelegate.addNetworkingOperationQueue(appDelegate.netQueue, delegate: self, metadataNet: metadataNet)
+    }
+    
+    private func requestServerStatus() {
+
+        let ocNetworking = OCnetworking.init(delegate: self, metadataNet: nil, withUser: appDelegate.activeUser, withUserID: appDelegate.activeUserID, withPassword: appDelegate.activePassword, withUrl: appDelegate.activeUrl)
+        ocNetworking?.serverStatus(appDelegate.activeUrl, success: { (serverProductName, versionMajor, versionMicro, versionMinor) in
+            
+            if serverProductName == "owncloud" {
+                self.appDelegate.messageNotification("_warning_", description: "_warning_owncloud_", visible: true, delay: TimeInterval(k_dismissAfterSecond), type: TWMessageBarMessageType.info, errorCode: Int(k_CCErrorInternalError))
+            } else if versionMajor <= k_nextcloud_unsupported {
+                self.appDelegate.messageNotification("_warning_", description: "_warning_unsupported_", visible: true, delay: TimeInterval(k_dismissAfterSecond), type: TWMessageBarMessageType.info, errorCode: Int(k_CCErrorInternalError))
+            }
+            
+        }, failure: { (message, errorCode) in
+            //
+        })
     }
     
     //MARK: -
@@ -130,7 +147,7 @@ class NCService: NSObject, OCNetworkingDelegate {
                 DispatchQueue.global().async {
                 
                     let address = capabilities!.themingBackground!.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)!
-                    let fileName = "\(self.appDelegate.directoryUser!)/themingBackground.png"
+                    let fileNamePath = CCUtility.getDirectoryUserData() + "/" + CCUtility.getStringUser(self.appDelegate.activeUser, activeUrl: self.appDelegate.activeUrl) + "-themingBackground.png"
 
                     guard let imageData = try? Data(contentsOf: URL(string: address)!) else {
                         DispatchQueue.main.async {
@@ -142,13 +159,13 @@ class NCService: NSObject, OCNetworkingDelegate {
                     DispatchQueue.main.async {
                         
                         guard let image = UIImage(data: imageData) else {
-                            try? FileManager.default.removeItem(atPath: fileName)
+                            try? FileManager.default.removeItem(atPath: fileNamePath)
                             self.appDelegate.settingThemingColorBrand()
                             return
                         }
                     
                         if let data = UIImagePNGRepresentation(image) {
-                            try? data.write(to: URL(fileURLWithPath: fileName))
+                            try? data.write(to: URL(fileURLWithPath: fileNamePath))
                         }
                     
                         self.appDelegate.settingThemingColorBrand()
@@ -220,7 +237,7 @@ class NCService: NSObject, OCNetworkingDelegate {
         }
     }
     
-    @objc func getUserProfileSuccessFailure(_ metadataNet: CCMetadataNet!, userProfile: OCUserProfile?, message: String?, errorCode: Int) {
+   func getUserProfileSuccessFailure(_ metadataNet: CCMetadataNet!, userProfile: OCUserProfile?, message: String?, errorCode: Int) {
         
         // Check Active Account
         if (metadataNet.account != appDelegate.activeAccount) {
@@ -235,18 +252,21 @@ class NCService: NSObject, OCNetworkingDelegate {
                 return
             }
             
+            let user = tableAccount.user
+            let url = tableAccount.url
+            
             CCNetworking.shared().settingAccount()
             appDelegate.settingActiveAccount(tableAccount.account, activeUrl: tableAccount.url, activeUser: tableAccount.user, activeUserID: tableAccount.userID, activePassword: tableAccount.password)
             
             // Call func thath required the userdID
             appDelegate.activeFavorites.listingFavorites()
-            appDelegate.activePhotos.searchPhotoVideo()
+            appDelegate.activeMedia.searchPhotoVideo()
             
             DispatchQueue.global(qos: .default).async {
                 
                 let address = "\(self.appDelegate.activeUrl!)/index.php/avatar/\(self.appDelegate.activeUser!)/128".addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)!
-                let fileName = "\(self.appDelegate.directoryUser!)/avatar.png"
-
+                let fileNamePath = CCUtility.getDirectoryUserData() + "/" + CCUtility.getStringUser(user, activeUrl: url) + "-avatar.png"
+                
                 guard let imageData = try? Data(contentsOf: URL(string: address)!) else {
                     DispatchQueue.main.async {
                         NotificationCenter.default.post(name: NSNotification.Name(rawValue: "changeUserProfile"), object: nil)
@@ -257,13 +277,13 @@ class NCService: NSObject, OCNetworkingDelegate {
                 DispatchQueue.main.async {
                     
                     guard let image = UIImage(data: imageData) else {
-                        try? FileManager.default.removeItem(atPath: fileName)
+                        try? FileManager.default.removeItem(atPath: fileNamePath)
                         NotificationCenter.default.post(name: NSNotification.Name(rawValue: "changeUserProfile"), object: nil)
                         return
                     }
                 
                     if let data = UIImagePNGRepresentation(image) {
-                        try? data.write(to: URL(fileURLWithPath: fileName))
+                        try? data.write(to: URL(fileURLWithPath: fileNamePath))
                     }
                 
                     NotificationCenter.default.post(name: NSNotification.Name(rawValue: "changeUserProfile"), object: nil)
@@ -283,7 +303,7 @@ class NCService: NSObject, OCNetworkingDelegate {
         }
     }
     
-    @objc func getExternalSitesServerSuccessFailure(_ metadataNet: CCMetadataNet!, listOfExternalSites: [Any]?, message: String?, errorCode: Int) {
+    func getExternalSitesServerSuccessFailure(_ metadataNet: CCMetadataNet!, listOfExternalSites: [Any]?, message: String?, errorCode: Int) {
         
         // Check Active Account
         if (metadataNet.account != appDelegate.activeAccount) {
@@ -310,7 +330,7 @@ class NCService: NSObject, OCNetworkingDelegate {
         }
     }
     
-    @objc func getActivityServerSuccessFailure(_ metadataNet: CCMetadataNet!, listOfActivity: [Any]?, message: String?, errorCode: Int) {
+    func getActivityServerSuccessFailure(_ metadataNet: CCMetadataNet!, listOfActivity: [Any]?, message: String?, errorCode: Int) {
         
         // Check Active Account
         if (metadataNet.account != appDelegate.activeAccount) {
@@ -337,7 +357,7 @@ class NCService: NSObject, OCNetworkingDelegate {
         }
     }
     
-    @objc func getNotificationServerSuccessFailure(_ metadataNet: CCMetadataNet!, listOfNotifications: [Any]?, message: String?, errorCode: Int) {
+    func getNotificationServerSuccessFailure(_ metadataNet: CCMetadataNet!, listOfNotifications: [Any]?, message: String?, errorCode: Int) {
     
         // Check Active Account
         if (metadataNet.account != appDelegate.activeAccount) {
